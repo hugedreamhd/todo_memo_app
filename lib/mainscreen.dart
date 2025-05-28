@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todolist/add_task.dart';
+import 'package:todolist/update_task.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -64,6 +65,13 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void updateLocalData({required int index, required String updateText}) {
+    setState(() {
+      todoList[index] = updateText;
+    });
+    writeLocalData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,17 +87,21 @@ class _MainScreenState extends State<MainScreen> {
                 itemBuilder: (context, index) {
                   return Dismissible(
                     key: UniqueKey(),
-                    direction: DismissDirection.startToEnd,
+                    // direction: DismissDirection.startToEnd,
                     background: Container(
-                      color: Colors.red,
+                      color: Colors.green,
                       child: Row(
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.delete),
+                            child: Icon(Icons.check),
                           ),
                         ],
                       ),
+                    ),
+                    secondaryBackground: Container(
+                      color: Colors.red,
+                      child: Icon(Icons.cancel),
                     ),
                     onDismissed: (direction) {
                       setState(() {
@@ -102,19 +114,56 @@ class _MainScreenState extends State<MainScreen> {
                         showModalBottomSheet(
                           context: context,
                           builder: (context) {
-                            return Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(20),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    todoList.removeAt(index);
-                                  });
-                                  writeLocalData();
-                                  Navigator.pop(context);
-                                },
-                                child: Text('Task done!'),
-                              ),
+                            return Column(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(20),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        todoList.removeAt(index);
+                                      });
+                                      writeLocalData();
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('메모 삭제'),
+                                  ),
+                                ),
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(20),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (context) {
+                                          return Padding(
+                                            padding:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).viewInsets,
+                                            child: Container(
+                                              height: 250,
+                                              child: UpdateTask(
+                                                currentText: todoList[index],
+                                                onUpdate: (String todoText) {
+                                                  updateLocalData(
+                                                    index: index,
+                                                    updateText: todoText,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: Text('메모 수정'),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         );

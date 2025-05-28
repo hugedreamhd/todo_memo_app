@@ -25,18 +25,40 @@ class _AddTaskState extends State<AddTask> {
               autofocus: true,
               onSubmitted: (value) {
                 if (todoText.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '메모를 입력해주세요',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      duration: Duration(seconds: 1),
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
-                    ),
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: Text('알림', textAlign: TextAlign.center),
+                          actionsAlignment: MainAxisAlignment.center,
+                          content: Text(
+                            '메모를 입력해주세요',
+                            textAlign: TextAlign.center,
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text('확인'),
+                            ),
+                          ],
+                        ),
                   );
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   SnackBar(
+                  //     content: Text(
+                  //       '메모를 입력해주세요',
+                  //       textAlign: TextAlign.center,
+                  //       style: TextStyle(color: Colors.red),
+                  //     ),
+                  //     duration: Duration(seconds: 1),
+                  //     behavior: SnackBarBehavior.floating,
+                  //     margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
+                  //     backgroundColor: Colors.white,
+                  //     elevation: 6,
+                  //   ),
+                  // );
                 } else {
                   widget.addTodo(todoText: todoText.text);
                   todoText.clear();
@@ -53,18 +75,38 @@ class _AddTaskState extends State<AddTask> {
           ElevatedButton(
             onPressed: () {
               if (todoText.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '메모를 입력해주세요',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    duration: Duration(seconds: 1),
-                    behavior: SnackBarBehavior.floating,
-                    margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
-                  ),
+                showDialog(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        title: Text('알림', textAlign: TextAlign.center),
+                        actionsAlignment: MainAxisAlignment.center,
+                        content: Text(
+                          '메모를 입력해주세요',
+                          textAlign: TextAlign.center,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text('확인'),
+                          ),
+                        ],
+                      ),
                 );
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content: Text(
+                //       '메모를 입력해주세요',
+                //       textAlign: TextAlign.center,
+                //       style: TextStyle(color: Colors.white),
+                //     ),
+                //     duration: Duration(seconds: 1),
+                //     behavior: SnackBarBehavior.floating,
+                //     margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
+                //   ),
+                // );
               } else {
                 widget.addTodo(todoText: todoText.text);
                 todoText.clear();
