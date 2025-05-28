@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:todolist/add_task.dart';
+import 'package:todolist/create_task.dart';
 import 'package:todolist/update_task.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
   }
 
-  void addTodo({required String todoText}) {
+  void createTodo({required String todoText}) {
     if (todoList.contains(todoText)) {
       showDialog(
         context: context,
@@ -180,7 +180,10 @@ class _MainScreenState extends State<MainScreen> {
             builder: (context) {
               return Padding(
                 padding: MediaQuery.of(context).viewInsets,
-                child: Container(height: 250, child: AddTask(addTodo: addTodo)),
+                child: Container(
+                  height: 250,
+                  child: CreateTask(createTodo: createTodo),
+                ),
               );
             },
           );

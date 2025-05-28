@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class AddTask extends StatefulWidget {
-  final void Function({required String todoText}) addTodo;
+class CreateTask extends StatefulWidget {
+  final void Function({required String todoText}) createTodo;
 
-  const AddTask({super.key, required this.addTodo});
+  const CreateTask({super.key, required this.createTodo});
 
   @override
-  State<AddTask> createState() => _AddTaskState();
+  State<CreateTask> createState() => _CreateTaskState();
 }
 
-class _AddTaskState extends State<AddTask> {
+class _CreateTaskState extends State<CreateTask> {
   var todoText = TextEditingController();
 
   @override
@@ -60,7 +60,7 @@ class _AddTaskState extends State<AddTask> {
                   //   ),
                   // );
                 } else {
-                  widget.addTodo(todoText: todoText.text);
+                  widget.createTodo(todoText: todoText.text);
                   todoText.clear();
                 }
               },
@@ -108,7 +108,7 @@ class _AddTaskState extends State<AddTask> {
                 //   ),
                 // );
               } else {
-                widget.addTodo(todoText: todoText.text);
+                widget.createTodo(todoText: todoText.text);
                 todoText.clear();
               }
             },
