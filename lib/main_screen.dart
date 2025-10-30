@@ -75,39 +75,91 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(child: Text("Drawer")),
-      appBar: AppBar(title: Text('TODO App'), centerTitle: true),
+      appBar: AppBar(title: Text('오늘의 할일'), centerTitle: true),
       body:
           (todoList.isEmpty)
               ? Center(
-                child: Text('표시할 메모가 없어요 :)', style: TextStyle(fontSize: 20)),
+                child: Text('표시할 메모가 없어요:)', style: TextStyle(fontSize: 20)),
               )
               : ListView.builder(
                 itemCount: todoList.length,
                 itemBuilder: (context, index) {
                   return Dismissible(
-                    key: UniqueKey(),
+                    key: ValueKey(todoList[index]),
                     // direction: DismissDirection.startToEnd,
+                    // 오른쪽 스와이프 (삭제) 배경
                     background: Container(
-                      color: Colors.green,
+                      color: Colors.red,
                       child: Row(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.check),
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: Icon(Icons.delete),
                           ),
                         ],
                       ),
                     ),
+                    // 왼쪽 스와이프 (삭제) 배경
                     secondaryBackground: Container(
-                      color: Colors.red,
-                      child: Icon(Icons.cancel),
+                      color: Colors.blue,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: Icon(Icons.save),
                     ),
+                    dismissThresholds: const {
+                      // 오른쪽으로 50% 드래그
+                      DismissDirection.startToEnd: 0.5,
+                      // 왼쪽으로 50% 드래그
+                      DismissDirection.endToStart: 0.5,
+                    },
+                    //보류 로직
+                    confirmDismiss: (DismissDirection direction) async {
+                      if (direction == DismissDirection.startToEnd) {
+                        return await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('삭제 확인'),
+                              content: const Text('정말로 이 항목을 삭제하시겠습니까?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(false),
+                                  child: const Text('취소'),
+                                ),
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(true),
+                                  child: const Text('삭제'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        //여기에 보류 관련 로직 추가
+                        print('${todoList[index]}을(를) 보류 처리했습니다');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${todoList[index]} 보류됨')),
+                        );
+                        //false를 반환하여 아이템이 사라지지 않고 제자리로 돌아가게 함
+                        return false;
+                      }
+                    },
+                    //삭제 로직
                     onDismissed: (direction) {
-                      setState(() {
-                        todoList.removeAt(index);
-                      });
-                      writeLocalData();
+                      if (direction == DismissDirection.startToEnd) {
+                        // 삭제될 아이템을 미리 변수에 저장
+                        final removeItem = todoList[index];
+                        setState(() {
+                          todoList.removeAt(index);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          //삭제될 변수만 따로 삭제되게 하는 코드
+                          SnackBar(content: Text('$removeItem 삭제됨')),
+                        );
+                        writeLocalData();
+                      }
                     },
                     child: ListTile(
                       onTap: () {
@@ -190,6 +242,19 @@ class _MainScreenState extends State<MainScreen> {
         },
         backgroundColor: Colors.black,
         child: Icon(Icons.add, color: Colors.white),
+      ),
+      bottomNavigationBar: NavigationBar(
+        destinations: [
+          NavigationDestination(
+            icon: Icon(Icons.favorite_border_outlined),
+            label: 'Saved',
+          ),
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
+          NavigationDestination(
+            icon: Icon(Icons.pause_circle_outline),
+            label: 'Paused',
+          ),
+        ],
       ),
     );
   }

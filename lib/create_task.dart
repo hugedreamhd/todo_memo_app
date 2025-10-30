@@ -13,6 +13,12 @@ class _CreateTaskState extends State<CreateTask> {
   var todoText = TextEditingController();
 
   @override
+  void dispose() {
+    todoText.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -45,20 +51,6 @@ class _CreateTaskState extends State<CreateTask> {
                           ],
                         ),
                   );
-                  // ScaffoldMessenger.of(context).showSnackBar(
-                  //   SnackBar(
-                  //     content: Text(
-                  //       '메모를 입력해주세요',
-                  //       textAlign: TextAlign.center,
-                  //       style: TextStyle(color: Colors.red),
-                  //     ),
-                  //     duration: Duration(seconds: 1),
-                  //     behavior: SnackBarBehavior.floating,
-                  //     margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
-                  //     backgroundColor: Colors.white,
-                  //     elevation: 6,
-                  //   ),
-                  // );
                 } else {
                   widget.createTodo(todoText: todoText.text);
                   todoText.clear();
@@ -95,18 +87,6 @@ class _CreateTaskState extends State<CreateTask> {
                         ],
                       ),
                 );
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   SnackBar(
-                //     content: Text(
-                //       '메모를 입력해주세요',
-                //       textAlign: TextAlign.center,
-                //       style: TextStyle(color: Colors.white),
-                //     ),
-                //     duration: Duration(seconds: 1),
-                //     behavior: SnackBarBehavior.floating,
-                //     margin: EdgeInsets.only(bottom: 250, left: 10, right: 10),
-                //   ),
-                // );
               } else {
                 widget.createTodo(todoText: todoText.text);
                 todoText.clear();
