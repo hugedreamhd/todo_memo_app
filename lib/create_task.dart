@@ -11,6 +11,7 @@ class CreateTask extends StatefulWidget {
 
 class _CreateTaskState extends State<CreateTask> {
   var todoText = TextEditingController();
+  String? _errorText;
 
   @override
   void dispose() {
@@ -20,81 +21,106 @@ class _CreateTaskState extends State<CreateTask> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Text('메모 추가'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: TextField(
-              autofocus: true,
-              onSubmitted: (value) {
-                if (todoText.text.isEmpty) {
-                  showDialog(
-                    context: context,
-                    builder:
-                        (context) => AlertDialog(
-                          title: Text('알림', textAlign: TextAlign.center),
-                          actionsAlignment: MainAxisAlignment.center,
-                          content: Text(
-                            '메모를 입력해주세요',
-                            textAlign: TextAlign.center,
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: Text('확인'),
-                            ),
-                          ],
-                        ),
-                  );
-                } else {
-                  widget.createTodo(todoText: todoText.text);
-                  todoText.clear();
-                }
-              },
-              controller: todoText,
-              decoration: InputDecoration(
-                hintText: '메모를 넣어주세요',
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-            ),
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              if (todoText.text.isEmpty) {
-                showDialog(
-                  context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: Text('알림', textAlign: TextAlign.center),
-                        actionsAlignment: MainAxisAlignment.center,
-                        content: Text(
-                          '메모를 입력해주세요',
-                          textAlign: TextAlign.center,
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text('확인'),
-                          ),
-                        ],
-                      ),
-                );
-              } else {
-                widget.createTodo(todoText: todoText.text);
-                todoText.clear();
-              }
-            },
-            child: Text('추가'),
+    final theme = Theme.of(context);
+
+    void submit() {
+      final text = todoText.text.trim();
+      if (text.isEmpty) {
+        setState(() {
+          _errorText = '메모를 입력해주세요';
+        });
+        return;
+      }
+      widget.createTodo(todoText: text);
+      setState(() {
+        _errorText = null;
+      });
+      todoText.clear();
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '메모 추가',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '오늘 기록하고 싶은 내용을 간단하게 적어보세요.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: todoText,
+              autofocus: true,
+              maxLines: 3,
+              textInputAction: TextInputAction.newline,
+              onSubmitted: (_) => submit(),
+              onChanged: (_) {
+                if (_errorText != null) {
+                  setState(() {
+                    _errorText = null;
+                  });
+                }
+              },
+              decoration: InputDecoration(
+                labelText: '메모 내용',
+                hintText: '예) 헬스장 등록, 서점 방문, 장보기',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                alignLabelWithHint: true,
+                prefixIcon: const Icon(Icons.edit_outlined),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+                errorText: _errorText,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: submit,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: const Color(0xFF4C6EF5),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              icon: const Icon(Icons.check_rounded),
+              label: const Text(
+                '메모 저장',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

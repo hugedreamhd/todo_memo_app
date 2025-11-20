@@ -16,6 +16,7 @@ class UpdateTask extends StatefulWidget {
 
 class _UpdateTaskState extends State<UpdateTask> {
   final TextEditingController _controller;
+  String? _errorText;
 
   _UpdateTaskState() : _controller = TextEditingController();
 
@@ -33,54 +34,103 @@ class _UpdateTaskState extends State<UpdateTask> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Text('메모 수정'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: '메모를 수정해주세요',
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-            ),
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              if (_controller.text.isEmpty) {
-                showDialog(
-                  context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: Text('알림', textAlign: TextAlign.center),
-                        actionsAlignment: MainAxisAlignment.center,
-                        content: Text(
-                          '메모를 입력해주세요',
-                          textAlign: TextAlign.center,
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text('확인'),
-                          ),
-                        ],
-                      ),
-                );
-              } else {
-                widget.onUpdate(_controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: Text('수정'),
+    final theme = Theme.of(context);
+
+    void submit() {
+      final text = _controller.text.trim();
+      if (text.isEmpty) {
+        setState(() {
+          _errorText = '메모를 입력해주세요';
+        });
+        return;
+      }
+      widget.onUpdate(text);
+      Navigator.pop(context);
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '메모 수정',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '텍스트를 수정하고 저장을 누르면 바로 반영돼요.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              maxLines: 3,
+              textInputAction: TextInputAction.newline,
+              onSubmitted: (_) => submit(),
+              onChanged: (_) {
+                if (_errorText != null) {
+                  setState(() {
+                    _errorText = null;
+                  });
+                }
+              },
+              decoration: InputDecoration(
+                labelText: '메모 내용',
+                hintText: '수정하고 싶은 내용을 입력해주세요',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                alignLabelWithHint: true,
+                prefixIcon: const Icon(Icons.edit_note_rounded),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+                errorText: _errorText,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: submit,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: const Color(0xFF4C6EF5),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              icon: const Icon(Icons.check_circle_rounded),
+              label: const Text(
+                '변경 사항 저장',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -12,7 +12,6 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<String> todoList = [];
-  int _currentIndex = 1;
 
   @override
   void initState() {
@@ -71,6 +70,262 @@ class _MainScreenState extends State<MainScreen> {
       todoList[index] = updateText;
     });
     writeLocalData();
+  }
+
+  void _showSavedMemoSheet() {
+    final rootContext = context;
+    showModalBottomSheet(
+      context: rootContext,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return FractionallySizedBox(
+          heightFactor: 0.65,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4C6EF5).withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.bookmarks_outlined,
+                          color: Color(0xFF4C6EF5),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '저장된 메모',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '현재 저장된 모든 메모 목록이에요.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child:
+                        todoList.isEmpty
+                            ? Center(
+                              child: Text(
+                                '아직 저장된 메모가 없어요.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                            )
+                            : ListView.separated(
+                              itemCount: todoList.length,
+                              separatorBuilder:
+                                  (_, __) => const Divider(height: 20),
+                              itemBuilder: (context, index) {
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.push_pin_outlined,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        todoList[index],
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTaskActionSheet(int index) {
+    final rootContext = context;
+    showModalBottomSheet(
+      context: rootContext,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 24,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4C6EF5).withOpacity(0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.note_alt_outlined,
+                        color: Color(0xFF4C6EF5),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '메모 관리',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '수정하거나 삭제할 작업을 선택하세요.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    showModalBottomSheet(
+                      context: rootContext,
+                      builder: (context) {
+                        return Padding(
+                          padding: MediaQuery.of(context).viewInsets,
+                          child: UpdateTask(
+                            currentText: todoList[index],
+                            onUpdate: (String todoText) {
+                              updateLocalData(
+                                index: index,
+                                updateText: todoText,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: const Color(0xFF4C6EF5),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_rounded),
+                  label: const Text(
+                    '메모 수정',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: rootContext,
+                      builder: (dialogContext) {
+                        return AlertDialog(
+                          title: const Text('삭제 확인'),
+                          content: const Text('정말로 이 메모를 삭제할까요?'),
+                          actions: [
+                            TextButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, false),
+                              child: const Text('취소'),
+                            ),
+                            FilledButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF5C5C),
+                              ),
+                              child: const Text('삭제'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirm == true) {
+                      final removedItem = todoList[index];
+                      setState(() {
+                        todoList.removeAt(index);
+                      });
+                      writeLocalData();
+                      Navigator.pop(sheetContext);
+                      ScaffoldMessenger.of(rootContext).showSnackBar(
+                        SnackBar(content: Text('$removedItem 삭제됨')),
+                      );
+                    }
+                  },
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: const Color(0xFFFF5C5C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  icon: const Icon(Icons.delete_forever_rounded),
+                  label: const Text(
+                    '메모 삭제',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -163,64 +418,7 @@ class _MainScreenState extends State<MainScreen> {
                       }
                     },
                     child: ListTile(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) {
-                            return Column(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(20),
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        todoList.removeAt(index);
-                                      });
-                                      writeLocalData();
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text('메모 삭제'),
-                                  ),
-                                ),
-                                Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(20),
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      showModalBottomSheet(
-                                        context: context,
-                                        builder: (context) {
-                                          return Padding(
-                                            padding:
-                                                MediaQuery.of(
-                                                  context,
-                                                ).viewInsets,
-                                            child: Container(
-                                              height: 250,
-                                              child: UpdateTask(
-                                                currentText: todoList[index],
-                                                onUpdate: (String todoText) {
-                                                  updateLocalData(
-                                                    index: index,
-                                                    updateText: todoText,
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: Text('메모 수정'),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                      onTap: () => _showTaskActionSheet(index),
                       title: Text(todoList[index]),
                     ),
                   );
@@ -233,10 +431,7 @@ class _MainScreenState extends State<MainScreen> {
             builder: (context) {
               return Padding(
                 padding: MediaQuery.of(context).viewInsets,
-                child: Container(
-                  height: 250,
-                  child: CreateTask(createTodo: createTodo),
-                ),
+                child: CreateTask(createTodo: createTodo),
               );
             },
           );
@@ -244,23 +439,24 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.black,
         child: Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border_outlined),
-            label: 'Saved',
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: FilledButton.tonalIcon(
+            onPressed: _showSavedMemoSheet,
+            icon: const Icon(Icons.bookmarks_outlined),
+            label: const Text(
+              '저장된 메모 보기',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pause_circle_outline),
-            label: 'Paused',
-          ),
-        ],
+        ),
       ),
     );
   }
