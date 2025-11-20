@@ -12,6 +12,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<String> todoList = [];
+  int _currentIndex = 1;
 
   @override
   void initState() {
@@ -243,14 +244,19 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.black,
         child: Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: NavigationBar(
-        destinations: [
-          NavigationDestination(
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border_outlined),
             label: 'Saved',
           ),
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.pause_circle_outline),
             label: 'Paused',
           ),
