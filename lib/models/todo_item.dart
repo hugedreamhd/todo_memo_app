@@ -42,6 +42,7 @@ class TodoItem {
   final bool repeatDaily;
   final bool isHighlighted;
   final DateTime createdAt;
+  final String? imagePath;
 
   TodoItem({
     required this.id,
@@ -52,6 +53,7 @@ class TodoItem {
     this.reminder,
     this.repeatDaily = false,
     this.isHighlighted = false,
+    this.imagePath,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -64,6 +66,8 @@ class TodoItem {
     bool overrideReminder = false,
     bool? repeatDaily,
     bool? isHighlighted,
+    String? imagePath,
+    bool overrideImagePath = false,
   }) {
     return TodoItem(
       id: id,
@@ -74,6 +78,8 @@ class TodoItem {
       reminder: overrideReminder ? reminder : (reminder ?? this.reminder),
       repeatDaily: repeatDaily ?? this.repeatDaily,
       isHighlighted: isHighlighted ?? this.isHighlighted,
+      imagePath:
+          overrideImagePath ? imagePath : (imagePath ?? this.imagePath),
       createdAt: createdAt,
     );
   }
@@ -94,6 +100,7 @@ class TodoItem {
               : null,
       repeatDaily: json['repeatDaily'] as bool? ?? false,
       isHighlighted: json['isHighlighted'] as bool? ?? false,
+      imagePath: json['imagePath'] as String?,
       createdAt:
           json['createdAt'] != null
               ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
@@ -111,6 +118,7 @@ class TodoItem {
       'reminder': reminder?.toIso8601String(),
       'repeatDaily': repeatDaily,
       'isHighlighted': isHighlighted,
+      'imagePath': imagePath,
       'createdAt': createdAt.toIso8601String(),
     };
   }
