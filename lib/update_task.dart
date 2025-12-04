@@ -1,15 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:todolist/models/todo_item.dart';
+import 'package:todolist/viewmodels/todo_view_model.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UpdateTask extends StatefulWidget {
   final TodoItem todo;
-  final void Function(TodoItem) onUpdate;
 
-  const UpdateTask({
-    super.key,
-    required this.todo,
-    required this.onUpdate,
-  });
+  const UpdateTask({super.key, required this.todo});
 
   @override
   State<UpdateTask> createState() => _UpdateTaskState();
@@ -19,30 +19,33 @@ class _UpdateTaskState extends State<UpdateTask> {
   late TextEditingController _titleController;
   late List<_ChecklistEntry> _checklistEntries;
   late String _selectedTag;
-  late String _priority;
   DateTime? _reminder;
   bool _repeatDaily = false;
   bool _highlight = false;
   String? _errorText;
+  String? _imagePath;
+
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.todo.title);
-    _checklistEntries = widget.todo.checklist
-        .map(
-          (item) => _ChecklistEntry(
-            id: item.id,
-            controller: TextEditingController(text: item.text),
-            isDone: item.isDone,
-          ),
-        )
-        .toList();
+    _checklistEntries =
+        widget.todo.checklist
+            .map(
+              (item) => _ChecklistEntry(
+                id: item.id,
+                controller: TextEditingController(text: item.text),
+                isDone: item.isDone,
+              ),
+            )
+            .toList();
     _selectedTag = widget.todo.tag;
-    _priority = widget.todo.priority;
     _reminder = widget.todo.reminder;
     _repeatDaily = widget.todo.repeatDaily;
     _highlight = widget.todo.isHighlighted;
+    _imagePath = widget.todo.imagePath;
   }
 
   @override
@@ -72,6 +75,18 @@ class _UpdateTaskState extends State<UpdateTask> {
     });
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _imagePath = picked.path;
+    });
+  }
+
   Future<void> _pickReminder() async {
     final now = DateTime.now();
     final date = await showDatePicker(
@@ -84,46 +99,57 @@ class _UpdateTaskState extends State<UpdateTask> {
     if (!mounted) return;
     final time = await showTimePicker(
       context: context,
-      initialTime: _reminder != null
-          ? TimeOfDay.fromDateTime(_reminder!)
-          : TimeOfDay.fromDateTime(now),
+      initialTime:
+          _reminder != null
+              ? TimeOfDay.fromDateTime(_reminder!)
+              : TimeOfDay.fromDateTime(now),
     );
     if (time == null) return;
     if (!mounted) return;
     setState(() {
-      _reminder = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _reminder = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() => _errorText = '메모를 입력해주세요');
       return;
     }
-    final checklist = _checklistEntries
-        .where((entry) => entry.controller.text.trim().isNotEmpty)
-        .map(
-          (entry) => ChecklistItem(
-            id: entry.id,
-            text: entry.controller.text.trim(),
-            isDone: entry.isDone,
-          ),
-        )
-        .toList();
+    final checklist =
+        _checklistEntries
+            .where((entry) => entry.controller.text.trim().isNotEmpty)
+            .map(
+              (entry) => ChecklistItem(
+                id: entry.id,
+                text: entry.controller.text.trim(),
+                isDone: entry.isDone,
+              ),
+            )
+            .toList();
 
     final updated = widget.todo.copyWith(
       title: title,
       tag: _selectedTag,
-      priority: _priority,
       checklist: checklist,
       reminder: _reminder,
       overrideReminder: true,
       repeatDaily: _repeatDaily,
       isHighlighted: _highlight,
+      imagePath: _imagePath,
+      overrideImagePath: true,
     );
 
-    widget.onUpdate(updated);
+    final viewModel = context.read<TodoViewModel>();
+    await viewModel.updateTodo(updated);
+    if (!mounted) return;
     Navigator.pop(context);
   }
 
@@ -157,11 +183,74 @@ class _UpdateTaskState extends State<UpdateTask> {
               ),
               const SizedBox(height: 8),
               Text(
-                '텍스트와 체크리스트, 리마인더를 수정할 수 있어요.',
+                '텍스트와 체크리스트, 중요알림을 수정할 수 있어요.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
               ),
+              const SizedBox(height: 24),
+              Text(
+                '사진 추가',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('갤러리에서 선택'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('카메라로 촬영'),
+                    ),
+                  ),
+                ],
+              ),
+              if (_imagePath != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 4 / 3,
+                        child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _imagePath = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               TextField(
                 controller: _titleController,
@@ -176,8 +265,8 @@ class _UpdateTaskState extends State<UpdateTask> {
                 decoration: InputDecoration(
                   labelText: '메모 내용',
                   filled: true,
-                  fillColor:
-                      theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.6),
                   alignLabelWithHint: true,
                   prefixIcon: const Icon(Icons.edit_note_rounded),
                   border: OutlineInputBorder(
@@ -193,7 +282,7 @@ class _UpdateTaskState extends State<UpdateTask> {
               ),
               const SizedBox(height: 16),
               Text(
-                '태그와 우선순위',
+                '태그',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -201,24 +290,14 @@ class _UpdateTaskState extends State<UpdateTask> {
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                children: ['일반', '개인', '업무', '건강', '학습'].map((tag) {
-                  return ChoiceChip(
-                    label: Text(tag),
-                    selected: _selectedTag == tag,
-                    onSelected: (_) => setState(() => _selectedTag = tag),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: '낮음', label: Text('낮음')),
-                  ButtonSegment(value: '보통', label: Text('보통')),
-                  ButtonSegment(value: '높음', label: Text('높음')),
-                ],
-                selected: {_priority},
-                onSelectionChanged: (value) =>
-                    setState(() => _priority = value.first),
+                children:
+                    ['일반', '개인', '업무', '건강', '학습'].map((tag) {
+                      return ChoiceChip(
+                        label: Text(tag),
+                        selected: _selectedTag == tag,
+                        onSelected: (_) => setState(() => _selectedTag = tag),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 24),
               Row(
@@ -238,45 +317,46 @@ class _UpdateTaskState extends State<UpdateTask> {
                 ],
               ),
               Column(
-                children: _checklistEntries.isEmpty
-                    ? [
-                        Text(
-                          '체크리스트가 없어요. 필요한 항목을 추가해보세요.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.outline,
+                children:
+                    _checklistEntries.isEmpty
+                        ? [
+                          Text(
+                            '체크리스트가 없어요. 필요한 항목을 추가해보세요.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
                           ),
-                        ),
-                      ]
-                    : _checklistEntries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: entry.isDone,
-                                onChanged: (value) {
-                                  setState(() {
-                                    entry.isDone = value ?? false;
-                                  });
-                                },
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  controller: entry.controller,
-                                  decoration: InputDecoration(
-                                    hintText: '세부 항목',
-                                    border: const OutlineInputBorder(),
+                        ]
+                        : _checklistEntries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: entry.isDone,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      entry.isDone = value ?? false;
+                                    });
+                                  },
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: entry.controller,
+                                    decoration: InputDecoration(
+                                      hintText: '세부 항목',
+                                      border: const OutlineInputBorder(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () => _removeChecklistEntry(entry),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => _removeChecklistEntry(entry),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
               ),
               const SizedBox(height: 24),
               Row(
@@ -287,7 +367,7 @@ class _UpdateTaskState extends State<UpdateTask> {
                       icon: const Icon(Icons.alarm),
                       label: Text(
                         _reminder == null
-                            ? '리마인더 없음'
+                            ? '알림'
                             : '${_reminder!.month}/${_reminder!.day} ${_reminder!.hour.toString().padLeft(2, '0')}:${_reminder!.minute.toString().padLeft(2, '0')}',
                       ),
                     ),
@@ -296,7 +376,8 @@ class _UpdateTaskState extends State<UpdateTask> {
                   Expanded(
                     child: SwitchListTile(
                       value: _repeatDaily,
-                      onChanged: (value) => setState(() => _repeatDaily = value),
+                      onChanged:
+                          (value) => setState(() => _repeatDaily = value),
                       title: const Text('매일 반복'),
                     ),
                   ),
@@ -307,14 +388,13 @@ class _UpdateTaskState extends State<UpdateTask> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => setState(() => _reminder = null),
-                    child: const Text('리마인더 삭제'),
+                    child: const Text('중요알림 삭제'),
                   ),
                 ),
               SwitchListTile(
                 value: _highlight,
                 onChanged: (value) => setState(() => _highlight = value),
-                title: const Text('중요 메모로 강조'),
-                subtitle: const Text('리스트에서 강조 배경으로 표시됩니다.'),
+                title: const Text('중요 메모에 저장'),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -352,4 +432,3 @@ class _ChecklistEntry {
   final TextEditingController controller;
   bool isDone;
 }
-
