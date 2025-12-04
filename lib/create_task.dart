@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:todolist/models/todo_item.dart';
+import 'package:todolist/viewmodels/todo_view_model.dart';
 
 class CreateTask extends StatefulWidget {
-  final void Function(TodoItem todo) createTodo;
-
-  const CreateTask({super.key, required this.createTodo});
+  const CreateTask({super.key});
 
   @override
   State<CreateTask> createState() => _CreateTaskState();
@@ -22,10 +25,12 @@ class _CreateTaskState extends State<CreateTask> {
   ];
   String? _errorText;
   String _selectedTag = '일반';
-  String _priority = '보통';
   DateTime? _reminder;
   bool _repeatDaily = false;
   bool _highlight = false;
+  String? _imagePath;
+
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void dispose() {
@@ -40,6 +45,18 @@ class _CreateTaskState extends State<CreateTask> {
     final controller = TextEditingController(text: initial);
     setState(() {
       _checklistControllers.add(controller);
+    });
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _imagePath = picked.path;
     });
   }
 
@@ -90,7 +107,7 @@ class _CreateTaskState extends State<CreateTask> {
     return buffer.toString();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() => _errorText = '메모를 입력해주세요');
@@ -110,20 +127,41 @@ class _CreateTaskState extends State<CreateTask> {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
       tag: _selectedTag,
-      priority: _priority,
       checklist: checklist,
       reminder: _reminder,
       repeatDaily: _repeatDaily,
       isHighlighted: _highlight,
+      imagePath: _imagePath,
     );
-    widget.createTodo(todo);
+    final viewModel = context.read<TodoViewModel>();
+    final success = await viewModel.addTodo(todo);
+    if (!success && mounted) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('알림'),
+            content: const Text('이미 동일한 메모가 있어요. 다른 내용을 입력해 주세요.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('확인'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+    if (!mounted) return;
+    Navigator.pop(context);
     setState(() {
       _errorText = null;
       _selectedTag = '일반';
-      _priority = '보통';
       _reminder = null;
       _repeatDaily = false;
       _highlight = false;
+      _imagePath = null;
       _titleController.clear();
       for (final controller in _checklistControllers) {
         controller.dispose();
@@ -237,6 +275,69 @@ class _CreateTaskState extends State<CreateTask> {
               ),
               const SizedBox(height: 24),
               Text(
+                '사진 추가',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('갤러리에서 선택'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('카메라로 촬영'),
+                    ),
+                  ),
+                ],
+              ),
+              if (_imagePath != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1 / 1,
+                        child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _imagePath = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              Text(
                 '태그 선택',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
@@ -254,25 +355,6 @@ class _CreateTaskState extends State<CreateTask> {
                         onSelected: (_) => setState(() => _selectedTag = tag),
                       );
                     }).toList(),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '우선순위',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: '낮음', label: Text('낮음')),
-                  ButtonSegment(value: '보통', label: Text('보통')),
-                  ButtonSegment(value: '높음', label: Text('높음')),
-                ],
-                selected: {_priority},
-                onSelectionChanged: (value) {
-                  setState(() => _priority = value.first);
-                },
               ),
               const SizedBox(height: 24),
               Row(
@@ -345,7 +427,7 @@ class _CreateTaskState extends State<CreateTask> {
                       icon: const Icon(Icons.alarm_add_rounded),
                       label: Text(
                         _reminder == null
-                            ? '리마인더 추가'
+                            ? '알림 시간 설정'
                             : '${_reminder!.month}/${_reminder!.day} ${_reminder!.hour.toString().padLeft(2, '0')}:${_reminder!.minute.toString().padLeft(2, '0')}',
                       ),
                     ),
@@ -364,8 +446,7 @@ class _CreateTaskState extends State<CreateTask> {
               SwitchListTile(
                 value: _highlight,
                 onChanged: (value) => setState(() => _highlight = value),
-                title: const Text('중요 메모로 강조'),
-                subtitle: const Text('리스트에서 강조 배경으로 표시됩니다.'),
+                title: const Text('중요 메모에 저장'),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
