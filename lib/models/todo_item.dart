@@ -46,10 +46,8 @@ class TodoItem {
       reminder: overrideReminder ? reminder : (reminder ?? this.reminder),
       repeatDaily: repeatDaily ?? this.repeatDaily,
       isHighlighted: isHighlighted ?? this.isHighlighted,
-      imagePath:
-          overrideImagePath ? imagePath : (imagePath ?? this.imagePath),
-      deletedAt:
-          overrideDeletedAt ? deletedAt : (deletedAt ?? this.deletedAt),
+      imagePath: overrideImagePath ? imagePath : (imagePath ?? this.imagePath),
+      deletedAt: overrideDeletedAt ? deletedAt : (deletedAt ?? this.deletedAt),
       createdAt: createdAt,
     );
   }

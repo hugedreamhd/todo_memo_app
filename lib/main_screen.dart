@@ -353,63 +353,64 @@ class MainScreen extends StatelessWidget {
                                                   IconButton(
                                                     visualDensity:
                                                         VisualDensity.compact,
-                                                    icon: const Icon(Icons.star),
+                                                    icon: const Icon(
+                                                      Icons.star,
+                                                    ),
                                                     tooltip: '메인으로 이동',
                                                     color:
                                                         theme
                                                             .colorScheme
                                                             .primary,
                                                     onPressed: () async {
-                                                      final confirm =
-                                                          await showDialog<
-                                                            bool
-                                                          >(
-                                                            context:
-                                                                rootContext,
-                                                            builder: (
-                                                              dialogContext,
-                                                            ) {
-                                                              return AlertDialog(
-                                                                title: const Text(
-                                                                  '메인으로 이동',
-                                                                ),
-                                                                content: const Text(
-                                                                  '이 메모를 메인 목록으로 이동할까요?',
-                                                                ),
-                                                                actions: [
-                                                                  TextButton(
-                                                                    onPressed:
-                                                                        () => Navigator.pop(
-                                                                          dialogContext,
-                                                                          false,
-                                                                        ),
-                                                                    child:
-                                                                        const Text(
-                                                                          '취소',
-                                                                        ),
-                                                                  ),
-                                                                  FilledButton(
-                                                                    onPressed:
-                                                                        () => Navigator.pop(
-                                                                          dialogContext,
-                                                                          true,
-                                                                        ),
-                                                                    child:
-                                                                        const Text(
-                                                                          '이동',
-                                                                        ),
-                                                                  ),
-                                                                ],
-                                                              );
-                                                            },
+                                                      final confirm = await showDialog<
+                                                        bool
+                                                      >(
+                                                        context: rootContext,
+                                                        builder: (
+                                                          dialogContext,
+                                                        ) {
+                                                          return AlertDialog(
+                                                            title: const Text(
+                                                              '메인으로 이동',
+                                                            ),
+                                                            content: const Text(
+                                                              '이 메모를 메인 목록으로 이동할까요?',
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed:
+                                                                    () => Navigator.pop(
+                                                                      dialogContext,
+                                                                      false,
+                                                                    ),
+                                                                child:
+                                                                    const Text(
+                                                                      '취소',
+                                                                    ),
+                                                              ),
+                                                              FilledButton(
+                                                                onPressed:
+                                                                    () => Navigator.pop(
+                                                                      dialogContext,
+                                                                      true,
+                                                                    ),
+                                                                child:
+                                                                    const Text(
+                                                                      '이동',
+                                                                    ),
+                                                              ),
+                                                            ],
                                                           );
+                                                        },
+                                                      );
                                                       if (confirm == true) {
                                                         await viewModel
                                                             .setImportant(
                                                               todo,
                                                               false,
                                                             );
-                                                        if (rootContext.mounted) {
+                                                        if (rootContext
+                                                            .mounted) {
                                                           ScaffoldMessenger.of(
                                                             rootContext,
                                                           ).showSnackBar(
@@ -453,11 +454,13 @@ class MainScreen extends StatelessWidget {
                                                             true,
                                                         builder: (context) {
                                                           return Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                              bottom: MediaQuery.of(
-                                                                context,
-                                                              ).viewInsets.bottom,
+                                                            padding: EdgeInsets.only(
+                                                              bottom:
+                                                                  MediaQuery.of(
+                                                                        context,
+                                                                      )
+                                                                      .viewInsets
+                                                                      .bottom,
                                                             ),
                                                             child: UpdateTask(
                                                               todo: todo,
@@ -785,16 +788,14 @@ class MainScreen extends StatelessWidget {
                                                 icon: const Icon(
                                                   Icons.delete_forever,
                                                 ),
-                                                color:
-                                                    theme.colorScheme.error,
+                                                color: theme.colorScheme.error,
                                                 tooltip: '완전 삭제',
                                                 onPressed: () async {
-                                                  final confirm =
-                                                      await showDialog<bool>(
+                                                  final confirm = await showDialog<
+                                                    bool
+                                                  >(
                                                     context: rootContext,
-                                                    builder: (
-                                                      dialogContext,
-                                                    ) {
+                                                    builder: (dialogContext) {
                                                       return AlertDialog(
                                                         title: const Text(
                                                           '완전 삭제',
@@ -819,8 +820,7 @@ class MainScreen extends StatelessWidget {
                                                                   dialogContext,
                                                                   true,
                                                                 ),
-                                                            style: FilledButton
-                                                                .styleFrom(
+                                                            style: FilledButton.styleFrom(
                                                               backgroundColor:
                                                                   theme
                                                                       .colorScheme
@@ -1412,16 +1412,18 @@ class _SwipeActionTileState extends State<_SwipeActionTile>
         final rightOnlyRadius = const BorderRadius.horizontal(
           right: Radius.circular(_taskCardRadius),
         );
-        final childRadius = BorderRadius.lerp(
-          widget.childBorderRadius,
-          leftOnlyRadius,
-          easedProgress,
-        )!;
-        final backgroundRadius = BorderRadius.lerp(
-          _taskBorderRadius,
-          rightOnlyRadius,
-          easedProgress,
-        )!;
+        final childRadius =
+            BorderRadius.lerp(
+              widget.childBorderRadius,
+              leftOnlyRadius,
+              easedProgress,
+            )!;
+        final backgroundRadius =
+            BorderRadius.lerp(
+              _taskBorderRadius,
+              rightOnlyRadius,
+              easedProgress,
+            )!;
 
         return GestureDetector(
           onHorizontalDragUpdate: (details) {
