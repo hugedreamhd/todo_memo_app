@@ -15,7 +15,6 @@ class CreateTask extends StatefulWidget {
 
 class _CreateTaskState extends State<CreateTask> {
   final TextEditingController _titleController = TextEditingController();
-  final List<TextEditingController> _checklistControllers = [];
   final List<String> _suggestions = [
     '운동 30분',
     '독서 20분',
@@ -35,17 +34,7 @@ class _CreateTaskState extends State<CreateTask> {
   @override
   void dispose() {
     _titleController.dispose();
-    for (final controller in _checklistControllers) {
-      controller.dispose();
-    }
     super.dispose();
-  }
-
-  void _addChecklistField({String initial = ''}) {
-    final controller = TextEditingController(text: initial);
-    setState(() {
-      _checklistControllers.add(controller);
-    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -87,47 +76,21 @@ class _CreateTaskState extends State<CreateTask> {
     });
   }
 
-  String _summaryPreview(String text) {
-    if (text.isEmpty &&
-        _checklistControllers.every(
-          (controller) => controller.text.trim().isEmpty,
-        )) {
-      return '입력한 내용이 요약으로 표시됩니다.';
-    }
-    final buffer = StringBuffer();
-    if (text.isNotEmpty) {
-      buffer.write(text.length > 40 ? '${text.substring(0, 40)}…' : text);
-    }
-    final nonEmptyChecklist =
-        _checklistControllers.where((c) => c.text.trim().isNotEmpty).length;
-    if (nonEmptyChecklist > 0) {
-      if (buffer.isNotEmpty) buffer.write('\n');
-      buffer.write('체크리스트 $nonEmptyChecklist개 포함');
-    }
-    return buffer.toString();
-  }
-
   Future<void> _submit() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() => _errorText = '메모를 입력해주세요');
       return;
     }
-    final checklist =
-        _checklistControllers
-            .where((controller) => controller.text.trim().isNotEmpty)
-            .map(
-              (controller) => ChecklistItem(
-                id: DateTime.now().microsecondsSinceEpoch.toString(),
-                text: controller.text.trim(),
-              ),
-            )
-            .toList();
+    // 매일 반복이 켜져있는데 알림 시간이 없으면 에러
+    if (_repeatDaily && _reminder == null) {
+      setState(() => _errorText = '매일 반복을 사용하려면 알림 시간을 설정해주세요');
+      return;
+    }
     final todo = TodoItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
       tag: _selectedTag,
-      checklist: checklist,
       reminder: _reminder,
       repeatDaily: _repeatDaily,
       isHighlighted: _highlight,
@@ -163,10 +126,6 @@ class _CreateTaskState extends State<CreateTask> {
       _highlight = false;
       _imagePath = null;
       _titleController.clear();
-      for (final controller in _checklistControllers) {
-        controller.dispose();
-      }
-      _checklistControllers.clear();
     });
   }
 
@@ -262,12 +221,48 @@ class _CreateTaskState extends State<CreateTask> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'AD',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.auto_awesome, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        _summaryPreview(_titleController.text),
-                        style: theme.textTheme.bodySmall,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '오늘의 추천',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '메모를 더 스마트하게 관리할 수 있는 기능을 확인해 보세요.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -285,6 +280,11 @@ class _CreateTaskState extends State<CreateTask> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: () => _pickImage(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined),
                       label: const Text('갤러리에서 선택'),
@@ -293,6 +293,11 @@ class _CreateTaskState extends State<CreateTask> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: () => _pickImage(ImageSource.camera),
                       icon: const Icon(Icons.photo_camera_outlined),
                       label: const Text('카메라로 촬영'),
@@ -357,72 +362,16 @@ class _CreateTaskState extends State<CreateTask> {
                     }).toList(),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '체크리스트',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _addChecklistField,
-                    icon: const Icon(Icons.add_task),
-                    label: const Text('항목 추가'),
-                  ),
-                ],
-              ),
-              Column(
-                children:
-                    _checklistControllers.isEmpty
-                        ? [
-                          Text(
-                            '체크리스트를 추가해 세부 작업을 관리해보세요.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ]
-                        : _checklistControllers.map((controller) {
-                          final index = _checklistControllers.indexOf(
-                            controller,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.drag_indicator, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: controller,
-                                    decoration: InputDecoration(
-                                      hintText: '항목 ${index + 1}',
-                                      border: const OutlineInputBorder(),
-                                    ),
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close),
-                                  onPressed: () {
-                                    setState(() {
-                                      controller.dispose();
-                                      _checklistControllers.remove(controller);
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-              ),
-              const SizedBox(height: 24),
+
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _pickReminder,
                       icon: const Icon(Icons.alarm_add_rounded),
                       label: Text(
@@ -436,8 +385,31 @@ class _CreateTaskState extends State<CreateTask> {
                   Expanded(
                     child: SwitchListTile(
                       value: _repeatDaily,
-                      onChanged:
-                          (value) => setState(() => _repeatDaily = value),
+                      onChanged: (value) {
+                        if (value && _reminder == null) {
+                          // 매일 반복을 켜려고 하는데 알림 시간이 없으면 경고
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) {
+                              return AlertDialog(
+                                title: const Text('알림'),
+                                content: const Text(
+                                  '매일 반복을 사용하려면 먼저 알림 시간을 설정해주세요.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(dialogContext),
+                                    child: const Text('확인'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          return; // 토글 취소
+                        }
+                        setState(() => _repeatDaily = value);
+                      },
                       title: const Text('매일 반복'),
                     ),
                   ),

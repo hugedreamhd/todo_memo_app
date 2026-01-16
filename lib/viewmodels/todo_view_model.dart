@@ -7,6 +7,7 @@ class TodoViewModel extends ChangeNotifier {
 
   final TodoRepository _repository;
   List<TodoItem> _todos = [];
+  static const Duration _deleteRetention = Duration(days: 3);
   bool _isLoading = true;
 
   String _searchQuery = '';
@@ -16,10 +17,19 @@ class TodoViewModel extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String get tagFilter => _tagFilter;
   List<TodoItem> get todos => List.unmodifiable(_todos);
+  List<TodoItem> get visibleTodos =>
+      _todos.where((todo) => todo.deletedAt == null).toList();
+  List<TodoItem> get deletedTodos {
+    final now = DateTime.now();
+    return _todos.where((todo) {
+      if (todo.deletedAt == null) return false;
+      return now.difference(todo.deletedAt!) < _deleteRetention;
+    }).toList();
+  }
 
   List<TodoItem> get filteredTodos {
     final query = _searchQuery.toLowerCase();
-    return _todos.where((todo) {
+    return visibleTodos.where((todo) {
       final matchSearch = todo.title.toLowerCase().contains(query);
       final matchTag = _tagFilter == '전체' || todo.tag == _tagFilter;
       final notImportant = !todo.isHighlighted;
@@ -29,7 +39,23 @@ class TodoViewModel extends ChangeNotifier {
 
   Future<void> initialize() async {
     _todos = await _repository.loadTodos();
+    _purgeExpiredDeleted();
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void _purgeExpiredDeleted() {
+    final now = DateTime.now();
+    _todos.removeWhere(
+      (todo) =>
+          todo.deletedAt != null &&
+          now.difference(todo.deletedAt!) >= _deleteRetention,
+    );
+  }
+
+  Future<void> _saveAndNotify() async {
+    _purgeExpiredDeleted();
+    await _repository.saveTodos(_todos);
     notifyListeners();
   }
 
@@ -40,8 +66,7 @@ class TodoViewModel extends ChangeNotifier {
     );
     if (exists) return false;
     _todos.insert(0, todo);
-    await _repository.saveTodos(_todos);
-    notifyListeners();
+    await _saveAndNotify();
     return true;
   }
 
@@ -49,22 +74,39 @@ class TodoViewModel extends ChangeNotifier {
     final index = _todos.indexWhere((todo) => todo.id == updated.id);
     if (index == -1) return;
     _todos[index] = updated;
-    await _repository.saveTodos(_todos);
-    notifyListeners();
+    await _saveAndNotify();
   }
 
   Future<void> deleteTodo(TodoItem todo) async {
+    final index = _todos.indexWhere((item) => item.id == todo.id);
+    if (index == -1) return;
+    _todos[index] = _todos[index].copyWith(
+      deletedAt: DateTime.now(),
+      overrideDeletedAt: true,
+    );
+    await _saveAndNotify();
+  }
+
+  Future<void> restoreTodo(TodoItem todo) async {
+    final index = _todos.indexWhere((item) => item.id == todo.id);
+    if (index == -1) return;
+    _todos[index] = _todos[index].copyWith(
+      deletedAt: null,
+      overrideDeletedAt: true,
+    );
+    await _saveAndNotify();
+  }
+
+  Future<void> purgeTodo(TodoItem todo) async {
     _todos.removeWhere((item) => item.id == todo.id);
-    await _repository.saveTodos(_todos);
-    notifyListeners();
+    await _saveAndNotify();
   }
 
   Future<void> setImportant(TodoItem todo, bool isImportant) async {
     final index = _todos.indexWhere((item) => item.id == todo.id);
     if (index == -1) return;
     _todos[index] = todo.copyWith(isHighlighted: isImportant);
-    await _repository.saveTodos(_todos);
-    notifyListeners();
+    await _saveAndNotify();
   }
 
   void setSearchQuery(String query) {
@@ -78,25 +120,17 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   String buildSummary(TodoItem todo) {
-    final checklistDone = todo.checklist.where((item) => item.isDone).length;
     final reminderText =
         todo.reminder == null
             ? ''
             : ' • ${todo.reminder!.month}/${todo.reminder!.day}';
     final snippet =
         todo.title.length > 60 ? '${todo.title.substring(0, 60)}…' : todo.title;
-    return '$snippet\n체크리스트: $checklistDone/${todo.checklist.length}$reminderText';
+    return '$snippet$reminderText';
   }
 
   String buildShareText(TodoItem todo) {
-    final buffer =
-        StringBuffer()
-          ..writeln('[${todo.tag}] ${todo.title}');
-    if (todo.checklist.isNotEmpty) {
-      for (final item in todo.checklist) {
-        buffer.writeln('- [${item.isDone ? 'x' : ' '}] ${item.text}');
-      }
-    }
+    final buffer = StringBuffer()..writeln('[${todo.tag}] ${todo.title}');
     if (todo.reminder != null) {
       buffer.writeln(
         '중요알림: ${todo.reminder!.month}/${todo.reminder!.day} '
@@ -105,5 +139,42 @@ class TodoViewModel extends ChangeNotifier {
       );
     }
     return buffer.toString();
+  }
+
+  Future<void> reorderVisibleTodos(
+    List<TodoItem> visible,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    if (oldIndex < 0 || oldIndex >= visible.length) return;
+    if (newIndex < 0 || newIndex > visible.length) return;
+
+    // ReorderableListView reports newIndex including the gap; adjust when moving down.
+    if (newIndex > oldIndex) newIndex -= 1;
+
+    final visibleIndices =
+        visible
+            .map((todo) => _todos.indexWhere((t) => t.id == todo.id))
+            .toList();
+    if (visibleIndices.any((i) => i == -1)) return;
+
+    final movingIndex = visibleIndices[oldIndex];
+    final movingItem = _todos.removeAt(movingIndex);
+
+    // Adjust remaining indices after removal
+    for (var i = 0; i < visibleIndices.length; i++) {
+      if (visibleIndices[i] > movingIndex) {
+        visibleIndices[i] -= 1;
+      }
+    }
+    visibleIndices.removeAt(oldIndex);
+
+    final insertIndex =
+        newIndex >= visibleIndices.length
+            ? (visibleIndices.isEmpty ? _todos.length : visibleIndices.last + 1)
+            : visibleIndices[newIndex];
+
+    _todos.insert(insertIndex, movingItem);
+    await _saveAndNotify();
   }
 }
