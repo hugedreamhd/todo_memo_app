@@ -176,6 +176,12 @@ class MainScreen extends StatelessWidget {
                                                         dialogContext,
                                                         true,
                                                       ),
+                                                  style: FilledButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.amber,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                  ),
                                                   child: const Text('이동'),
                                                 ),
                                               ],
@@ -216,6 +222,12 @@ class MainScreen extends StatelessWidget {
                                                         dialogContext,
                                                         true,
                                                       ),
+                                                  style: FilledButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xFFFF5C5C),
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                  ),
                                                   child: const Text('삭제'),
                                                 ),
                                               ],
@@ -394,6 +406,14 @@ class MainScreen extends StatelessWidget {
                                                                       dialogContext,
                                                                       true,
                                                                     ),
+                                                                style: FilledButton.styleFrom(
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .amber,
+                                                                  foregroundColor:
+                                                                      Colors
+                                                                          .white,
+                                                                ),
                                                                 child:
                                                                     const Text(
                                                                       '이동',
@@ -512,7 +532,7 @@ class MainScreen extends StatelessWidget {
                   ListTile(
                     leading: CircleAvatar(
                       backgroundColor: theme.colorScheme.primaryContainer,
-                      child: const Icon(Icons.auto_awesome),
+                      child: const Icon(Icons.description),
                     ),
                     title: Text(
                       todo.title,
@@ -895,6 +915,10 @@ class MainScreen extends StatelessWidget {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('저장'),
             ),
           ],
@@ -930,6 +954,10 @@ class MainScreen extends StatelessWidget {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF5C5C),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('삭제'),
             ),
           ],
