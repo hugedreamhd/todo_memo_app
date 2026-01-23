@@ -24,498 +24,21 @@ class MainScreen extends StatelessWidget {
   });
 
   void _showImportantMemoSheet(BuildContext rootContext) {
-    final theme = Theme.of(rootContext);
-    String selectedTag = '전체';
     showModalBottomSheet(
       context: rootContext,
       isScrollControlled: true,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final viewModel = context.watch<TodoViewModel>();
-            final importantAll =
-                viewModel.visibleTodos
-                    .where((todo) => todo.isHighlighted)
-                    .toList();
-            final filteredImportant =
-                importantAll
-                    .where(
-                      (todo) => selectedTag == '전체' || todo.tag == selectedTag,
-                    )
-                    .toList();
-
-            return FractionallySizedBox(
-              heightFactor: 0.8,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
-                  ),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.bookmarks_outlined),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '중요 메모',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                '${filteredImportant.length}개의 중요 메모가 있어요',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.share),
-                            onPressed: () async {
-                              if (filteredImportant.isEmpty) return;
-                              final summary = StringBuffer('중요 메모 목록\n');
-                              for (final todo in filteredImportant) {
-                                summary.writeln(
-                                  '- [${todo.tag}] ${todo.title}',
-                                );
-                              }
-                              if (summary.isEmpty) return;
-                              await Share.share(summary.toString());
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final tag in [
-                              '전체',
-                              '일반',
-                              '개인',
-                              '업무',
-                              '건강',
-                              '학습',
-                            ])
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ChoiceChip(
-                                  label: Text(tag),
-                                  selected: selectedTag == tag,
-                                  onSelected: (_) {
-                                    setState(() {
-                                      selectedTag = tag;
-                                    });
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child:
-                            filteredImportant.isEmpty
-                                ? Center(
-                                  child: Text(
-                                    '아직 선택한 태그의 중요 메모가 없어요.',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.outline,
-                                    ),
-                                  ),
-                                )
-                                : ListView.separated(
-                                  itemCount: filteredImportant.length,
-                                  separatorBuilder:
-                                      (_, __) => const SizedBox(height: 16),
-                                  itemBuilder: (itemContext, index) {
-                                    final todo = filteredImportant[index];
-
-                                    return _SwipeActionTile(
-                                      onSave: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: rootContext,
-                                          builder: (dialogContext) {
-                                            return AlertDialog(
-                                              title: const Text('메인으로 이동'),
-                                              content: const Text(
-                                                '이 메모를 메인 목록으로 이동할까요?',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed:
-                                                      () => Navigator.pop(
-                                                        dialogContext,
-                                                        false,
-                                                      ),
-                                                  child: const Text('취소'),
-                                                ),
-                                                FilledButton(
-                                                  onPressed:
-                                                      () => Navigator.pop(
-                                                        dialogContext,
-                                                        true,
-                                                      ),
-                                                  style: FilledButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.amber,
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                  ),
-                                                  child: const Text('이동'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        if (confirm == true) {
-                                          await viewModel.setImportant(
-                                            todo,
-                                            false,
-                                          );
-                                          if (rootContext.mounted) {
-                                            Navigator.pop(sheetContext);
-                                          }
-                                        }
-                                      },
-                                      onDelete: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: rootContext,
-                                          builder: (dialogContext) {
-                                            return AlertDialog(
-                                              title: const Text('정말 삭제'),
-                                              content: const Text(
-                                                '정말로 이 메모를 삭제하시겠어요?',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed:
-                                                      () => Navigator.pop(
-                                                        dialogContext,
-                                                        false,
-                                                      ),
-                                                  child: const Text('취소'),
-                                                ),
-                                                FilledButton(
-                                                  onPressed:
-                                                      () => Navigator.pop(
-                                                        dialogContext,
-                                                        true,
-                                                      ),
-                                                  style: FilledButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFFFF5C5C),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                  ),
-                                                  child: const Text('삭제'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        if (confirm == true) {
-                                          await viewModel.deleteTodo(todo);
-                                          if (rootContext.mounted) {
-                                            ScaffoldMessenger.of(
-                                              rootContext,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  '\'${todo.title}\' 메모가 삭제됐어요',
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      saveColor: const Color(0xFFFFD54F),
-                                      deleteColor: const Color(0xFFFF5C5C),
-                                      saveLabel: '이동',
-                                      deleteLabel: '삭제',
-                                      saveIcon: Icons.home,
-                                      deleteIcon: Icons.delete,
-                                      maxSlideFactor: 0.33,
-                                      childBorderRadius: BorderRadius.circular(
-                                        16,
-                                      ),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          Navigator.pop(sheetContext);
-                                          _showTaskActionSheet(
-                                            rootContext,
-                                            todo,
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(16),
-                                          color:
-                                              todo.isHighlighted
-                                                  ? theme
-                                                      .colorScheme
-                                                      .primaryContainer
-                                                  : theme
-                                                      .colorScheme
-                                                      .surfaceContainerHighest,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          todo.title,
-                                                          style: theme
-                                                              .textTheme
-                                                              .titleMedium
-                                                              ?.copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                        ),
-                                                        if (todo.imagePath !=
-                                                            null) ...[
-                                                          const SizedBox(
-                                                            height: 6,
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              Icon(
-                                                                Icons.image,
-                                                                size: 16,
-                                                                color:
-                                                                    theme
-                                                                        .colorScheme
-                                                                        .outline,
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 4,
-                                                              ),
-                                                              Text(
-                                                                '사진 포함',
-                                                                style: theme
-                                                                    .textTheme
-                                                                    .bodySmall
-                                                                    ?.copyWith(
-                                                                      color:
-                                                                          theme
-                                                                              .colorScheme
-                                                                              .outline,
-                                                                    ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Wrap(
-                                                spacing: 8,
-                                                runSpacing: 8,
-                                                children: [
-                                                  _InfoChip(
-                                                    label: todo.tag,
-                                                    icon: Icons.tag,
-                                                  ),
-                                                  if (todo.reminder != null)
-                                                    _InfoChip(
-                                                      label:
-                                                          '${todo.reminder!.month}/${todo.reminder!.day}',
-                                                      icon: Icons.alarm,
-                                                    ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  IconButton(
-                                                    visualDensity:
-                                                        VisualDensity.compact,
-                                                    icon: const Icon(
-                                                      Icons.star,
-                                                    ),
-                                                    tooltip: '메인으로 이동',
-                                                    color:
-                                                        theme
-                                                            .colorScheme
-                                                            .primary,
-                                                    onPressed: () async {
-                                                      final confirm = await showDialog<
-                                                        bool
-                                                      >(
-                                                        context: rootContext,
-                                                        builder: (
-                                                          dialogContext,
-                                                        ) {
-                                                          return AlertDialog(
-                                                            title: const Text(
-                                                              '메인으로 이동',
-                                                            ),
-                                                            content: const Text(
-                                                              '이 메모를 메인 목록으로 이동할까요?',
-                                                            ),
-                                                            actions: [
-                                                              TextButton(
-                                                                onPressed:
-                                                                    () => Navigator.pop(
-                                                                      dialogContext,
-                                                                      false,
-                                                                    ),
-                                                                child:
-                                                                    const Text(
-                                                                      '취소',
-                                                                    ),
-                                                              ),
-                                                              FilledButton(
-                                                                onPressed:
-                                                                    () => Navigator.pop(
-                                                                      dialogContext,
-                                                                      true,
-                                                                    ),
-                                                                style: FilledButton.styleFrom(
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .amber,
-                                                                  foregroundColor:
-                                                                      Colors
-                                                                          .white,
-                                                                ),
-                                                                child:
-                                                                    const Text(
-                                                                      '이동',
-                                                                    ),
-                                                              ),
-                                                            ],
-                                                          );
-                                                        },
-                                                      );
-                                                      if (confirm == true) {
-                                                        await viewModel
-                                                            .setImportant(
-                                                              todo,
-                                                              false,
-                                                            );
-                                                        if (rootContext
-                                                            .mounted) {
-                                                          ScaffoldMessenger.of(
-                                                            rootContext,
-                                                          ).showSnackBar(
-                                                            SnackBar(
-                                                              content: Text(
-                                                                '\'${todo.title}\'이(가) 메인으로 이동했어요',
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }
-                                                      }
-                                                    },
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.share,
-                                                    ),
-                                                    tooltip: '공유하기',
-                                                    onPressed:
-                                                        () => Share.share(
-                                                          viewModel
-                                                              .buildShareText(
-                                                                todo,
-                                                              ),
-                                                        ),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.edit,
-                                                    ),
-                                                    tooltip: '메모 수정',
-                                                    onPressed: () {
-                                                      Navigator.pop(
-                                                        sheetContext,
-                                                      );
-                                                      showModalBottomSheet(
-                                                        context: rootContext,
-                                                        isScrollControlled:
-                                                            true,
-                                                        builder: (context) {
-                                                          return Padding(
-                                                            padding: EdgeInsets.only(
-                                                              bottom:
-                                                                  MediaQuery.of(
-                                                                        context,
-                                                                      )
-                                                                      .viewInsets
-                                                                      .bottom,
-                                                            ),
-                                                            child: UpdateTask(
-                                                              todo: todo,
-                                                            ),
-                                                          );
-                                                        },
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder:
+          (sheetContext) =>
+              _ImportantMemoSheetContent(rootContext: rootContext),
     );
   }
 
-  void _showTaskActionSheet(BuildContext context, TodoItem todo) {
-    final theme = Theme.of(context);
-    final viewModel = context.read<TodoViewModel>();
+  void _showTaskActionSheet(BuildContext rootContext, TodoItem todo) {
+    final theme = Theme.of(rootContext);
+    final viewModel = rootContext.read<TodoViewModel>();
     showModalBottomSheet(
-      context: context,
+      context: rootContext,
+      isScrollControlled: true,
       builder: (sheetContext) {
         return Container(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -528,7 +51,19 @@ class MainScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   ListTile(
                     leading: CircleAvatar(
                       backgroundColor: theme.colorScheme.primaryContainer,
@@ -569,13 +104,12 @@ class MainScreen extends StatelessWidget {
                         _InfoChip(label: '매일', icon: Icons.autorenew),
                     ],
                   ),
-
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () {
                       Navigator.pop(sheetContext);
                       showModalBottomSheet(
-                        context: context,
+                        context: rootContext,
                         isScrollControlled: true,
                         builder: (context) {
                           return Padding(
@@ -610,9 +144,8 @@ class MainScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: () async {
-                      Navigator.pop(sheetContext);
                       final confirm = await showDialog<bool>(
-                        context: context,
+                        context: rootContext,
                         builder: (dialogContext) {
                           return AlertDialog(
                             title: const Text('삭제 확인'),
@@ -637,8 +170,9 @@ class MainScreen extends StatelessWidget {
                       );
                       if (confirm == true) {
                         await viewModel.deleteTodo(todo);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (rootContext.mounted) {
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(rootContext).showSnackBar(
                             SnackBar(
                               content: Text('\'${todo.title}\' 메모가 삭제됐어요'),
                             ),
@@ -1582,6 +1116,375 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
+      ),
+    );
+  }
+}
+
+class _ImportantMemoSheetContent extends StatefulWidget {
+  final BuildContext rootContext;
+
+  const _ImportantMemoSheetContent({required this.rootContext});
+
+  @override
+  State<_ImportantMemoSheetContent> createState() =>
+      _ImportantMemoSheetContentState();
+}
+
+class _ImportantMemoSheetContentState
+    extends State<_ImportantMemoSheetContent> {
+  String selectedTag = '전체';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(widget.rootContext);
+    final viewModel = context.watch<TodoViewModel>();
+    final filteredImportant = viewModel.getImportantTodos(selectedTag);
+
+    return FractionallySizedBox(
+      heightFactor: 0.8,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.bookmarks_outlined),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '중요 메모',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '${filteredImportant.length}개의 중요 메모가 있어요',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.share),
+                    onPressed: () async {
+                      final text = viewModel.getImportantSummaryText(
+                        selectedTag,
+                      );
+                      if (text.isNotEmpty) {
+                        await Share.share(text);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final tag in ['전체', '일반', '개인', '업무', '건강', '학습'])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(tag),
+                          selected: selectedTag == tag,
+                          onSelected: (_) {
+                            setState(() {
+                              selectedTag = tag;
+                            });
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child:
+                    filteredImportant.isEmpty
+                        ? Center(
+                          child: Text(
+                            '아직 선택한 태그의 중요 메모가 없어요.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        )
+                        : ListView.separated(
+                          itemCount: filteredImportant.length,
+                          separatorBuilder:
+                              (_, __) => const SizedBox(height: 16),
+                          itemBuilder: (itemContext, index) {
+                            final todo = filteredImportant[index];
+                            return _ImportantTodoTile(
+                              todo: todo,
+                              viewModel: viewModel,
+                              rootContext: widget.rootContext,
+                            );
+                          },
+                        ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ImportantTodoTile extends StatelessWidget {
+  final TodoItem todo;
+  final TodoViewModel viewModel;
+  final BuildContext rootContext;
+
+  const _ImportantTodoTile({
+    required this.todo,
+    required this.viewModel,
+    required this.rootContext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(rootContext);
+    return _SwipeActionTile(
+      onSave: () async {
+        final confirm = await showDialog<bool>(
+          context: rootContext,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('메인으로 이동'),
+              content: const Text('이 메모를 메인 목록으로 이동할까요?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('취소'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('이동'),
+                ),
+              ],
+            );
+          },
+        );
+        if (confirm == true) {
+          await viewModel.setImportant(todo, false);
+          if (rootContext.mounted) {
+            Navigator.pop(context);
+          }
+        }
+      },
+      onDelete: () async {
+        final confirm = await showDialog<bool>(
+          context: rootContext,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('정말 삭제'),
+              content: const Text('정말로 이 메모를 삭제하시겠어요?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('취소'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5C5C),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('삭제'),
+                ),
+              ],
+            );
+          },
+        );
+        if (confirm == true) {
+          await viewModel.deleteTodo(todo);
+          if (rootContext.mounted) {
+            ScaffoldMessenger.of(rootContext).showSnackBar(
+              SnackBar(content: Text('\'${todo.title}\' 메모가 삭제됐어요')),
+            );
+          }
+        }
+      },
+      saveColor: const Color(0xFFFFD54F),
+      deleteColor: const Color(0xFFFF5C5C),
+      saveLabel: '이동',
+      deleteLabel: '삭제',
+      saveIcon: Icons.home,
+      deleteIcon: Icons.delete,
+      maxSlideFactor: 0.33,
+      childBorderRadius: BorderRadius.circular(16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pop(context);
+          // Assuming _showTaskActionSheet is accessible or moved
+          (rootContext.widget as dynamic)._showTaskActionSheet(
+            rootContext,
+            todo,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          color:
+              todo.isHighlighted
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.surfaceContainerHighest,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          todo.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (todo.imagePath != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.image,
+                                size: 16,
+                                color: theme.colorScheme.outline,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '사진 포함',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoChip(label: todo.tag, icon: Icons.tag),
+                  if (todo.reminder != null)
+                    _InfoChip(
+                      label: '${todo.reminder!.month}/${todo.reminder!.day}',
+                      icon: Icons.alarm,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.star),
+                    tooltip: '메인으로 이동',
+                    color: theme.colorScheme.primary,
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: rootContext,
+                        builder: (dialogContext) {
+                          return AlertDialog(
+                            title: const Text('메인으로 이동'),
+                            content: const Text('이 메모를 메인 목록으로 이동할까요?'),
+                            actions: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.pop(dialogContext, false),
+                                child: const Text('취소'),
+                              ),
+                              FilledButton(
+                                onPressed:
+                                    () => Navigator.pop(dialogContext, true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.amber,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('이동'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (confirm == true) {
+                        await viewModel.setImportant(todo, false);
+                        if (rootContext.mounted) {
+                          ScaffoldMessenger.of(rootContext).showSnackBar(
+                            SnackBar(
+                              content: Text('\'${todo.title}\'이(가) 메인으로 이동했어요'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.share),
+                    tooltip: '공유하기',
+                    onPressed:
+                        () => Share.share(viewModel.buildShareText(todo)),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: '메모 수정',
+                    onPressed: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: rootContext,
+                        isScrollControlled: true,
+                        builder: (context) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom,
+                            ),
+                            child: UpdateTask(todo: todo),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

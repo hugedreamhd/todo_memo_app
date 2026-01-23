@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:todolist/models/todo_item.dart';
-import 'package:todolist/repositories/todo_repository.dart';
+import 'package:todolist/repositories/todo_repository_interface.dart';
 
 class TodoViewModel extends ChangeNotifier {
   TodoViewModel(this._repository);
 
-  final TodoRepository _repository;
+  final TodoRepositoryInterface _repository;
   List<TodoItem> _todos = [];
   static const Duration _deleteRetention = Duration(days: 3);
   bool _isLoading = true;
@@ -139,6 +139,23 @@ class TodoViewModel extends ChangeNotifier {
       );
     }
     return buffer.toString();
+  }
+
+  List<TodoItem> getImportantTodos(String tag) {
+    return visibleTodos.where((todo) {
+      final matchTag = tag == '전체' || todo.tag == tag;
+      return todo.isHighlighted && matchTag;
+    }).toList();
+  }
+
+  String getImportantSummaryText(String tag) {
+    final filtered = getImportantTodos(tag);
+    if (filtered.isEmpty) return '';
+    final summary = StringBuffer('중요 메모 목록\n');
+    for (final todo in filtered) {
+      summary.writeln('- [${todo.tag}] ${todo.title}');
+    }
+    return summary.toString();
   }
 
   Future<void> reorderVisibleTodos(
