@@ -6,6 +6,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:todolist/create_task.dart';
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/update_task.dart';
+import 'package:todolist/widgets/important_memo_sheet.dart';
+import 'package:todolist/widgets/info_chip.dart';
+import 'package:todolist/widgets/swipe_action_tile.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
 
 const double _taskCardRadius = 20.0;
@@ -28,8 +31,10 @@ class MainScreen extends StatelessWidget {
       context: rootContext,
       isScrollControlled: true,
       builder:
-          (sheetContext) =>
-              _ImportantMemoSheetContent(rootContext: rootContext),
+          (sheetContext) => ImportantMemoSheetContent(
+            rootContext: rootContext,
+            onShowTaskActionSheet: _showTaskActionSheet,
+          ),
     );
   }
 
@@ -93,15 +98,15 @@ class MainScreen extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _InfoChip(label: todo.tag, icon: Icons.tag),
+                      InfoChip(label: todo.tag, icon: Icons.tag),
                       if (todo.reminder != null)
-                        _InfoChip(
+                        InfoChip(
                           label:
                               '${todo.reminder!.month}/${todo.reminder!.day} ${todo.reminder!.hour.toString().padLeft(2, '0')}:${todo.reminder!.minute.toString().padLeft(2, '0')}',
                           icon: Icons.alarm,
                         ),
                       if (todo.repeatDaily)
-                        _InfoChip(label: '매일', icon: Icons.autorenew),
+                        InfoChip(label: '매일', icon: Icons.autorenew),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -300,12 +305,12 @@ class MainScreen extends StatelessWidget {
                                                 Wrap(
                                                   spacing: 8,
                                                   children: [
-                                                    _InfoChip(
+                                                    InfoChip(
                                                       label: todo.tag,
                                                       icon: Icons.tag,
                                                     ),
                                                     if (todo.isHighlighted)
-                                                      _InfoChip(
+                                                      InfoChip(
                                                         label: '중요',
                                                         icon: Icons.star,
                                                       ),
@@ -606,7 +611,7 @@ class MainScreen extends StatelessWidget {
                             return Padding(
                               key: ValueKey(todo.id),
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: _SwipeActionTile(
+                              child: SwipeActionTile(
                                 onSave:
                                     () => _handleSaveTodo(
                                       context,
@@ -627,17 +632,12 @@ class MainScreen extends StatelessWidget {
                                 deleteIcon: Icons.delete,
                                 maxSlideFactor: 0.33,
                                 childBorderRadius: _taskBorderRadius,
+                                isHighlighted: todo.isHighlighted,
                                 child: GestureDetector(
                                   onTap:
                                       () => _showTaskActionSheet(context, todo),
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
-                                    color:
-                                        todo.isHighlighted
-                                            ? theme.colorScheme.primaryContainer
-                                            : theme
-                                                .colorScheme
-                                                .surfaceContainerHighest,
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -683,23 +683,23 @@ class MainScreen extends StatelessWidget {
                                                 spacing: 8,
                                                 runSpacing: 8,
                                                 children: [
-                                                  _InfoChip(
+                                                  InfoChip(
                                                     label: todo.tag,
                                                     icon: Icons.tag,
                                                   ),
                                                   if (todo.reminder != null)
-                                                    _InfoChip(
+                                                    InfoChip(
                                                       label:
                                                           '${todo.reminder!.month}/${todo.reminder!.day} ${todo.reminder!.hour.toString().padLeft(2, '0')}:${todo.reminder!.minute.toString().padLeft(2, '0')}',
                                                       icon: Icons.alarm,
                                                     ),
                                                   if (todo.repeatDaily)
-                                                    _InfoChip(
+                                                    InfoChip(
                                                       label: '매일',
                                                       icon: Icons.autorenew,
                                                     ),
                                                   if (todo.imagePath != null)
-                                                    _InfoChip(
+                                                    InfoChip(
                                                       label: '',
                                                       icon: Icons.image,
                                                     ),
@@ -720,10 +720,9 @@ class MainScreen extends StatelessWidget {
                                                           ? Icons.star
                                                           : Icons.star_border,
                                                     ),
-                                                    color:
-                                                        theme
-                                                            .colorScheme
-                                                            .primary,
+                                                    color: const Color(
+                                                      0xFF00796B,
+                                                    ), // Deep Teal for better visibility on light background
                                                     tooltip:
                                                         todo.isHighlighted
                                                             ? '일반 메모로 이동'
@@ -854,6 +853,8 @@ class MainScreen extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF81ECE1),
+                    foregroundColor: Colors.black87,
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
@@ -866,7 +867,7 @@ class MainScreen extends StatelessWidget {
                 icon: const Icon(Icons.add),
                 tooltip: '메모 추가',
                 style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
+                  backgroundColor: const Color(0xFF58D68D),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(10),
                 ),
@@ -884,603 +885,6 @@ class MainScreen extends StatelessWidget {
                     },
                   );
                 },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SwipeActionTile extends StatefulWidget {
-  const _SwipeActionTile({
-    required this.child,
-    required this.onSave,
-    required this.onDelete,
-    required this.saveColor,
-    required this.deleteColor,
-    required this.saveLabel,
-    required this.deleteLabel,
-    required this.saveIcon,
-    required this.deleteIcon,
-    required this.childBorderRadius,
-    this.maxSlideFactor = 0.33,
-  });
-
-  final Widget child;
-  final VoidCallback onSave;
-  final VoidCallback onDelete;
-  final Color saveColor;
-  final Color deleteColor;
-  final String saveLabel;
-  final String deleteLabel;
-  final IconData saveIcon;
-  final IconData deleteIcon;
-  final BorderRadius childBorderRadius;
-  final double maxSlideFactor;
-
-  @override
-  State<_SwipeActionTile> createState() => _SwipeActionTileState();
-}
-
-class _SwipeActionTileState extends State<_SwipeActionTile>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  Animation<double>? _animation;
-  double _offsetX = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    )..addListener(() {
-      if (_animation == null) return;
-      setState(() {
-        _offsetX = _animation!.value;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _animateTo(double target) {
-    _controller.stop();
-    _animation = Tween<double>(
-      begin: _offsetX,
-      end: target,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _controller.forward(from: 0.0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxSlide = constraints.maxWidth * widget.maxSlideFactor;
-        final dragProgress = (-_offsetX / maxSlide).clamp(0.0, 1.0);
-        final radiusProgress = ((dragProgress - 0.7) / 0.25).clamp(0.0, 1.0);
-        final easedProgress = Curves.easeOut.transform(radiusProgress);
-        final leftOnlyRadius = BorderRadius.only(
-          topLeft: widget.childBorderRadius.topLeft,
-          bottomLeft: widget.childBorderRadius.bottomLeft,
-        );
-        final rightOnlyRadius = const BorderRadius.horizontal(
-          right: Radius.circular(_taskCardRadius),
-        );
-        final childRadius =
-            BorderRadius.lerp(
-              widget.childBorderRadius,
-              leftOnlyRadius,
-              easedProgress,
-            )!;
-        final backgroundRadius =
-            BorderRadius.lerp(
-              _taskBorderRadius,
-              rightOnlyRadius,
-              easedProgress,
-            )!;
-
-        return GestureDetector(
-          onHorizontalDragUpdate: (details) {
-            _controller.stop();
-            final nextOffset = (_offsetX + details.delta.dx).clamp(
-              -maxSlide,
-              0.0,
-            );
-            if (nextOffset != _offsetX) {
-              setState(() {
-                _offsetX = nextOffset;
-              });
-            }
-          },
-          onHorizontalDragEnd: (_) {
-            final shouldOpen = _offsetX.abs() >= maxSlide * 0.6;
-            _animateTo(shouldOpen ? -maxSlide : 0.0);
-          },
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: ClipRRect(
-                    borderRadius: backgroundRadius,
-                    child: SizedBox(
-                      width: maxSlide,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _SwipeActionButton(
-                              color: widget.saveColor,
-                              icon: widget.saveIcon,
-                              label: widget.saveLabel,
-                              onTap: () {
-                                _animateTo(0.0);
-                                widget.onSave();
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: _SwipeActionButton(
-                              color: widget.deleteColor,
-                              icon: widget.deleteIcon,
-                              label: widget.deleteLabel,
-                              onTap: () {
-                                _animateTo(0.0);
-                                widget.onDelete();
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Transform.translate(
-                offset: Offset(_offsetX, 0),
-                child: ClipRRect(
-                  borderRadius: childRadius,
-                  child: widget.child,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SwipeActionButton extends StatelessWidget {
-  const _SwipeActionButton({
-    required this.color,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final Color color;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      child: InkWell(
-        onTap: onTap,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: Colors.white),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
-      ),
-    );
-  }
-}
-
-class _ImportantMemoSheetContent extends StatefulWidget {
-  final BuildContext rootContext;
-
-  const _ImportantMemoSheetContent({required this.rootContext});
-
-  @override
-  State<_ImportantMemoSheetContent> createState() =>
-      _ImportantMemoSheetContentState();
-}
-
-class _ImportantMemoSheetContentState
-    extends State<_ImportantMemoSheetContent> {
-  String selectedTag = '전체';
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(widget.rootContext);
-    final viewModel = context.watch<TodoViewModel>();
-    final filteredImportant = viewModel.getImportantTodos(selectedTag);
-
-    return FractionallySizedBox(
-      heightFactor: 0.8,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.bookmarks_outlined),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '중요 메모',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        '${filteredImportant.length}개의 중요 메모가 있어요',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.share),
-                    onPressed: () async {
-                      final text = viewModel.getImportantSummaryText(
-                        selectedTag,
-                      );
-                      if (text.isNotEmpty) {
-                        await Share.share(text);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final tag in ['전체', '일반', '개인', '업무', '건강', '학습'])
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(tag),
-                          selected: selectedTag == tag,
-                          onSelected: (_) {
-                            setState(() {
-                              selectedTag = tag;
-                            });
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child:
-                    filteredImportant.isEmpty
-                        ? Center(
-                          child: Text(
-                            '아직 선택한 태그의 중요 메모가 없어요.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        )
-                        : ListView.separated(
-                          itemCount: filteredImportant.length,
-                          separatorBuilder:
-                              (_, __) => const SizedBox(height: 16),
-                          itemBuilder: (itemContext, index) {
-                            final todo = filteredImportant[index];
-                            return _ImportantTodoTile(
-                              todo: todo,
-                              viewModel: viewModel,
-                              rootContext: widget.rootContext,
-                            );
-                          },
-                        ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ImportantTodoTile extends StatelessWidget {
-  final TodoItem todo;
-  final TodoViewModel viewModel;
-  final BuildContext rootContext;
-
-  const _ImportantTodoTile({
-    required this.todo,
-    required this.viewModel,
-    required this.rootContext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(rootContext);
-    return _SwipeActionTile(
-      onSave: () async {
-        final confirm = await showDialog<bool>(
-          context: rootContext,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('메인으로 이동'),
-              content: const Text('이 메모를 메인 목록으로 이동할까요?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('취소'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('이동'),
-                ),
-              ],
-            );
-          },
-        );
-        if (confirm == true) {
-          await viewModel.setImportant(todo, false);
-          if (rootContext.mounted) {
-            Navigator.pop(context);
-          }
-        }
-      },
-      onDelete: () async {
-        final confirm = await showDialog<bool>(
-          context: rootContext,
-          builder: (dialogContext) {
-            return AlertDialog(
-              title: const Text('정말 삭제'),
-              content: const Text('정말로 이 메모를 삭제하시겠어요?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('취소'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5C5C),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('삭제'),
-                ),
-              ],
-            );
-          },
-        );
-        if (confirm == true) {
-          await viewModel.deleteTodo(todo);
-          if (rootContext.mounted) {
-            ScaffoldMessenger.of(rootContext).showSnackBar(
-              SnackBar(content: Text('\'${todo.title}\' 메모가 삭제됐어요')),
-            );
-          }
-        }
-      },
-      saveColor: const Color(0xFFFFD54F),
-      deleteColor: const Color(0xFFFF5C5C),
-      saveLabel: '이동',
-      deleteLabel: '삭제',
-      saveIcon: Icons.home,
-      deleteIcon: Icons.delete,
-      maxSlideFactor: 0.33,
-      childBorderRadius: BorderRadius.circular(16),
-      child: GestureDetector(
-        onTap: () {
-          Navigator.pop(context);
-          // Assuming _showTaskActionSheet is accessible or moved
-          (rootContext.widget as dynamic)._showTaskActionSheet(
-            rootContext,
-            todo,
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          color:
-              todo.isHighlighted
-                  ? theme.colorScheme.primaryContainer
-                  : theme.colorScheme.surfaceContainerHighest,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          todo.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (todo.imagePath != null) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.image,
-                                size: 16,
-                                color: theme.colorScheme.outline,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '사진 포함',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _InfoChip(label: todo.tag, icon: Icons.tag),
-                  if (todo.reminder != null)
-                    _InfoChip(
-                      label: '${todo.reminder!.month}/${todo.reminder!.day}',
-                      icon: Icons.alarm,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.star),
-                    tooltip: '메인으로 이동',
-                    color: theme.colorScheme.primary,
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: rootContext,
-                        builder: (dialogContext) {
-                          return AlertDialog(
-                            title: const Text('메인으로 이동'),
-                            content: const Text('이 메모를 메인 목록으로 이동할까요?'),
-                            actions: [
-                              TextButton(
-                                onPressed:
-                                    () => Navigator.pop(dialogContext, false),
-                                child: const Text('취소'),
-                              ),
-                              FilledButton(
-                                onPressed:
-                                    () => Navigator.pop(dialogContext, true),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Colors.amber,
-                                  foregroundColor: Colors.white,
-                                ),
-                                child: const Text('이동'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                      if (confirm == true) {
-                        await viewModel.setImportant(todo, false);
-                        if (rootContext.mounted) {
-                          ScaffoldMessenger.of(rootContext).showSnackBar(
-                            SnackBar(
-                              content: Text('\'${todo.title}\'이(가) 메인으로 이동했어요'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.share),
-                    tooltip: '공유하기',
-                    onPressed:
-                        () => Share.share(viewModel.buildShareText(todo)),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    tooltip: '메모 수정',
-                    onPressed: () {
-                      Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: rootContext,
-                        isScrollControlled: true,
-                        builder: (context) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: MediaQuery.of(context).viewInsets.bottom,
-                            ),
-                            child: UpdateTask(todo: todo),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
               ),
             ],
           ),
