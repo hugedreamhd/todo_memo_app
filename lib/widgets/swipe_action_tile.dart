@@ -179,7 +179,7 @@ class _SwipeActionTileState extends State<SwipeActionTile>
                 offset: Offset(_offsetX, 0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FBFA),
+                    color: const Color(0xFFF8FBFA), // 밝은 배경 유지
                     borderRadius: childRadius,
                     border: Border.all(color: borderColor, width: 1),
                     boxShadow: [

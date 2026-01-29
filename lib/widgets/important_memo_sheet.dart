@@ -259,6 +259,7 @@ class ImportantTodoTile extends StatelessWidget {
                           todo.title,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
+                            color: Colors.black87, // 블랙 계열로 고정
                           ),
                         ),
                         if (todo.imagePath != null) ...[
@@ -347,14 +348,20 @@ class ImportantTodoTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(
+                      Icons.share,
+                      color: Colors.black87,
+                    ), // 블랙 계열로 고정
                     tooltip: '공유하기',
                     onPressed:
                         () => Share.share(viewModel.buildShareText(todo)),
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.edit),
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Colors.black87,
+                    ), // 블랙 계열로 고정
                     tooltip: '메모 수정',
                     onPressed: () {
                       Navigator.pop(context);

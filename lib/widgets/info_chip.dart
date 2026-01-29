@@ -17,7 +17,26 @@ class InfoChip extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)],
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color:
+                theme.brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color:
+                  theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }

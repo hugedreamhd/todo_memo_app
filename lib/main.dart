@@ -31,6 +31,7 @@ class _MyAppState extends State<MyApp> {
       create: (_) => TodoViewModel(TodoRepository())..initialize(),
       child: MaterialApp(
         title: 'Flutter Demo',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF81ECE1),

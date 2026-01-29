@@ -659,6 +659,7 @@ class MainScreen extends StatelessWidget {
                                                         ?.copyWith(
                                                           fontWeight:
                                                               FontWeight.w600,
+                                                          color: Colors.black87,
                                                         ),
                                                   ),
                                                   if (todo.imagePath !=
@@ -800,7 +801,9 @@ class MainScreen extends StatelessWidget {
                                                   IconButton(
                                                     icon: const Icon(
                                                       Icons.share,
-                                                    ),
+                                                      color: Colors.black87,
+                                                    ), // 블랙 계열로 고정
+                                                    tooltip: '공유하기',
                                                     onPressed:
                                                         () => Share.share(
                                                           viewModel
@@ -818,6 +821,7 @@ class MainScreen extends StatelessWidget {
                                                       ),
                                                       child: Icon(
                                                         Icons.drag_indicator,
+                                                        color: Colors.black87,
                                                       ),
                                                     ),
                                                   ),
