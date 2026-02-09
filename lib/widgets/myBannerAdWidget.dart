@@ -10,6 +10,17 @@ class MyBannerAdWidget extends StatefulWidget {
 }
 
 class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // build가 완료된 후 첫 프레임에서 광고를 호출하도록 유도합니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) _loadAd();
+      });
+    });
+  }
+
   BannerAd? _bannerAd;
   bool _isLoaded = false;
   bool _isLoading = false;
@@ -20,11 +31,11 @@ class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
           ? 'ca-app-pub-3940256099942544/6300978111'
           : 'ca-app-pub-3940256099942544/2934735716';
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadAd(); // Context를 사용할 수 있는 시점에 광고 로드
-  }
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   _loadAd(); // Context를 사용할 수 있는 시점에 광고 로드
+  // }
 
   Future<void> _loadAd() async {
     if (_isLoading || _isLoaded) return;
