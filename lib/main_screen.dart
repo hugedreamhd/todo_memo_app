@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:todolist/create_task.dart';
@@ -8,6 +9,7 @@ import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/update_task.dart';
 import 'package:todolist/widgets/important_memo_sheet.dart';
 import 'package:todolist/widgets/info_chip.dart';
+import 'package:todolist/widgets/myBannerAdWidget.dart';
 import 'package:todolist/widgets/swipe_action_tile.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
 
@@ -325,19 +327,59 @@ class MainScreen extends StatelessWidget {
                                             children: [
                                               FilledButton(
                                                 onPressed: () async {
-                                                  await viewModel.restoreTodo(
-                                                    todo,
-                                                  );
-                                                  if (sheetContext.mounted) {
-                                                    ScaffoldMessenger.of(
-                                                      rootContext,
-                                                    ).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                          '\'${todo.title}\' 복구했어요',
+                                                  final confirm = await showDialog<
+                                                    bool
+                                                  >(
+                                                    context: rootContext,
+                                                    builder: (dialogContext) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                          '복구 확인',
                                                         ),
-                                                      ),
+                                                        content: Text(
+                                                          '\'${todo.title}\' 메모를 복구할까요?',
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                () => Navigator.pop(
+                                                                  dialogContext,
+                                                                  false,
+                                                                ),
+                                                            child: const Text(
+                                                              '취소',
+                                                            ),
+                                                          ),
+                                                          FilledButton(
+                                                            onPressed:
+                                                                () => Navigator.pop(
+                                                                  dialogContext,
+                                                                  true,
+                                                                ),
+                                                            child: const Text(
+                                                              '복구',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+
+                                                  if (confirm == true) {
+                                                    await viewModel.restoreTodo(
+                                                      todo,
                                                     );
+                                                    if (sheetContext.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        rootContext,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            '\'${todo.title}\' 복구했어요',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
                                                   }
                                                 },
                                                 child: const Text('복구'),
@@ -844,54 +886,60 @@ class MainScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () => _showImportantMemoSheet(context),
-                  icon: const Icon(Icons.star),
-                  label: const Text(
-                    '중요 메모 보기',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF81ECE1),
-                    foregroundColor: Colors.black87,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MyBannerAdWidget(), // 광고 배치
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.tonalIcon(
+                      onPressed: () => _showImportantMemoSheet(context),
+                      icon: const Icon(Icons.star),
+                      label: const Text(
+                        '중요 메모 보기',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF81ECE1),
+                        foregroundColor: Colors.black87,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 15),
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: '메모 추가',
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF58D68D),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(10),
-                ),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) {
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: const CreateTask(),
+                  const SizedBox(width: 15),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    tooltip: '메모 추가',
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFF58D68D),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(10),
+                    ),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (context) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom,
+                            ),
+                            child: const CreateTask(),
+                          );
+                        },
                       );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

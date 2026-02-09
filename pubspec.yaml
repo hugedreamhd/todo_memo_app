@@ -38,6 +38,7 @@ dependencies:
   share_plus: ^7.2.1
   provider: ^6.1.2
   image_picker: ^1.1.2
+  google_mobile_ads: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -52,14 +53,14 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
 
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: img/todays_todo.png
-  android_gravity: fill
-  ios_content_mode: scaleAspectFill
-  web_image_mode: fill
+  color: "#000000"
+  image: null
+  # android_gravity: fill
+  # ios_content_mode: scaleAspectFill
+  # web_image_mode: fill
   android_12:
-    color: "#FFFFFF"
-    image: img/todays_todo.png
+    color: "#000000"
+    image: assets/img/black_splash.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

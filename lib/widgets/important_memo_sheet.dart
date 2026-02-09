@@ -27,8 +27,8 @@ class _ImportantMemoSheetContentState extends State<ImportantMemoSheetContent> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(widget.rootContext);
-    final viewModel = widget.rootContext.read<TodoViewModel>();
+    final theme = Theme.of(context);
+    final viewModel = context.watch<TodoViewModel>();
     final filteredImportant = viewModel.getImportantTodos(selectedTag);
 
     return FractionallySizedBox(

@@ -112,6 +112,24 @@ class _UpdateTaskState extends State<UpdateTask> {
     Navigator.pop(context);
   }
 
+  void _showReminderAlert() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('알림'),
+          content: const Text('매일 반복을 사용하려면 먼저 알림 시간을 설정해주세요.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -349,37 +367,37 @@ class _UpdateTaskState extends State<UpdateTask> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: SwitchListTile(
-                      value: _repeatDaily,
-                      onChanged: (value) {
-                        if (value && _reminder == null) {
-                          showDialog(
-                            context: context,
-                            builder: (dialogContext) {
-                              return AlertDialog(
-                                title: const Text('알림'),
-                                content: const Text(
-                                  '매일 반복을 사용하려면 먼저 알림 시간을 설정해주세요.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(dialogContext),
-                                    child: const Text('확인'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                          return;
+                    child: InkWell(
+                      onTap: () {
+                        if (!_repeatDaily && _reminder == null) {
+                          _showReminderAlert();
+                        } else {
+                          setState(() => _repeatDaily = !_repeatDaily);
                         }
-                        setState(() => _repeatDaily = value);
                       },
-                      title: const Text('매일 반복'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Text('매일 반복'),
+                          const SizedBox(width: 4),
+                          Switch(
+                            value: _repeatDaily,
+                            onChanged: (value) {
+                              if (value && _reminder == null) {
+                                _showReminderAlert();
+                              } else {
+                                setState(() => _repeatDaily = value);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
               if (_reminder != null)
                 Align(
                   alignment: Alignment.centerRight,
@@ -388,10 +406,18 @@ class _UpdateTaskState extends State<UpdateTask> {
                     child: const Text('중요알림 삭제'),
                   ),
                 ),
-              SwitchListTile(
-                value: _highlight,
-                onChanged: (value) => setState(() => _highlight = value),
-                title: const Text('중요 메모에 저장'),
+              InkWell(
+                onTap: () => setState(() => _highlight = !_highlight),
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  children: [
+                    const Expanded(child: Text('중요 메모에 저장')),
+                    Switch(
+                      value: _highlight,
+                      onChanged: (value) => setState(() => _highlight = value),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -417,4 +443,3 @@ class _UpdateTaskState extends State<UpdateTask> {
     );
   }
 }
-
