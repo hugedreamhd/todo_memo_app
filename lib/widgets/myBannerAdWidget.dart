@@ -28,8 +28,8 @@ class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
   // 테스트 광고 ID (안드로이드 공식 테스트 ID)
   final String _adUnitId =
       Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/6300978111'
-          : 'ca-app-pub-3940256099942544/2934735716';
+          ? 'ca-app-pub-3940256099942544/9214589741'
+          : 'ca-app-pub-3940256099942544/2435281174';
 
   // @override
   // void didChangeDependencies() {
