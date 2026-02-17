@@ -10,12 +10,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. 구글 모바일 광고 SDK 초기화
-  await MobileAds.instance.initialize();
+  var status = await MobileAds.instance.initialize();
 
-  // 3. 테스트 디바이스 설정 (에뮬레이터 해결)
-  await MobileAds.instance.updateRequestConfiguration(
-    RequestConfiguration(testDeviceIds: ['E19E03387BD77FBE4D1C68A4910C2641']),
-  );
+  // // 3. 테스트 디바이스 설정 (에뮬레이터 해결)
+  // await MobileAds.instance.updateRequestConfiguration(
+  //   RequestConfiguration(testDeviceIds: ['E19E03387BD77FBE4D1C68A4910C2641']),
+  // );
   runApp(const MyApp());
 }
 

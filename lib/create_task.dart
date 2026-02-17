@@ -305,7 +305,11 @@ class _CreateTaskState extends State<CreateTask> {
                       ),
                       onPressed: () => _pickImage(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('갤러리에서 선택'),
+                      label: const Text(
+                        '갤러리에서 선택',
+                        style: TextStyle(fontSize: 12),
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

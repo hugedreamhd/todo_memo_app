@@ -890,6 +890,7 @@ class MainScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             MyBannerAdWidget(), // 광고 배치
+            const SizedBox(height: 5),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: Row(
