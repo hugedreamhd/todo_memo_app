@@ -1,26 +1,33 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist/main_screen.dart';
 import 'package:todolist/repositories/todo_repository.dart';
+import 'package:todolist/services/local_notification_service.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
 
 void main() async {
   // 1. Flutter 프레임워크와 네이티브 엔진 연결 보장
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. 구글 모바일 광고 SDK 초기화
-  var status = await MobileAds.instance.initialize();
+  // 2. 로컬 알림 서비스 초기화
+  final notificationService = LocalNotificationService();
+  await notificationService.initialize();
 
-  // // 3. 테스트 디바이스 설정 (에뮬레이터 해결)
+  // 3. 구글 모바일 광고 SDK 초기화
+  await MobileAds.instance.initialize();
+
+  // // 4. 테스트 디바이스 설정 (에뮬레이터 해결)
   // await MobileAds.instance.updateRequestConfiguration(
   //   RequestConfiguration(testDeviceIds: ['E19E03387BD77FBE4D1C68A4910C2641']),
   // );
-  runApp(const MyApp());
+  runApp(MyApp(notificationService: notificationService));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.notificationService});
+
+  final LocalNotificationService notificationService;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -39,7 +46,10 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TodoViewModel(TodoRepository())..initialize(),
+      create:
+          (_) =>
+              TodoViewModel(TodoRepository(), widget.notificationService)
+                ..initialize(),
       child: MaterialApp(
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,

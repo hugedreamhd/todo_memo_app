@@ -169,11 +169,32 @@ class _CreateTaskState extends State<CreateTask> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '메모 추가',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '메모 추가',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(
@@ -305,10 +326,9 @@ class _CreateTaskState extends State<CreateTask> {
                       ),
                       onPressed: () => _pickImage(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text(
-                        '갤러리에서 선택',
-                        style: TextStyle(fontSize: 12),
-                        maxLines: 1,
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('갤러리에서 선택', maxLines: 1),
                       ),
                     ),
                   ),
@@ -322,7 +342,10 @@ class _CreateTaskState extends State<CreateTask> {
                       ),
                       onPressed: () => _pickImage(ImageSource.camera),
                       icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('카메라로 촬영'),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('카메라로 촬영', maxLines: 1),
+                      ),
                     ),
                   ),
                 ],
@@ -396,10 +419,14 @@ class _CreateTaskState extends State<CreateTask> {
                       ),
                       onPressed: _pickReminder,
                       icon: const Icon(Icons.alarm_add_rounded),
-                      label: Text(
-                        _reminder == null
-                            ? '알림 시간 설정'
-                            : '${_reminder!.month}/${_reminder!.day} ${_reminder!.hour.toString().padLeft(2, '0')}:${_reminder!.minute.toString().padLeft(2, '0')}',
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _reminder == null
+                              ? '알림 시간 설정'
+                              : '${_reminder!.month}/${_reminder!.day} ${_reminder!.hour.toString().padLeft(2, '0')}:${_reminder!.minute.toString().padLeft(2, '0')}',
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ),

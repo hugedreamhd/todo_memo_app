@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/repositories/todo_repository_interface.dart';
+import 'package:todolist/services/notification_service_interface.dart';
 
 class TodoViewModel extends ChangeNotifier {
-  TodoViewModel(this._repository);
+  TodoViewModel(this._repository, this._notificationService);
 
   final TodoRepositoryInterface _repository;
+  final NotificationServiceInterface _notificationService;
   List<TodoItem> _todos = [];
   static const Duration _deleteRetention = Duration(days: 3);
   bool _isLoading = true;
@@ -67,6 +69,10 @@ class TodoViewModel extends ChangeNotifier {
     if (exists) return false;
     _todos.insert(0, todo);
     await _saveAndNotify();
+    // 알림 예약 (reminder 있을 때만)
+    if (todo.reminder != null) {
+      await _notificationService.scheduleOrUpdate(todo);
+    }
     return true;
   }
 
@@ -75,6 +81,8 @@ class TodoViewModel extends ChangeNotifier {
     if (index == -1) return;
     _todos[index] = updated;
     await _saveAndNotify();
+    // 알림 갱신 (scheduleOrUpdate 내부에서 취소 후 재등록 또는 취소 처리)
+    await _notificationService.scheduleOrUpdate(updated);
   }
 
   Future<void> deleteTodo(TodoItem todo) async {
@@ -85,6 +93,8 @@ class TodoViewModel extends ChangeNotifier {
       overrideDeletedAt: true,
     );
     await _saveAndNotify();
+    // 삭제 시 알림 취소
+    await _notificationService.cancel(todo.id);
   }
 
   Future<void> restoreTodo(TodoItem todo) async {
@@ -95,11 +105,18 @@ class TodoViewModel extends ChangeNotifier {
       overrideDeletedAt: true,
     );
     await _saveAndNotify();
+    // 복원 시 reminder 있으면 알림 재예약
+    final restored = _todos[index];
+    if (restored.reminder != null) {
+      await _notificationService.scheduleOrUpdate(restored);
+    }
   }
 
   Future<void> purgeTodo(TodoItem todo) async {
     _todos.removeWhere((item) => item.id == todo.id);
     await _saveAndNotify();
+    // 영구 삭제 시 알림 취소
+    await _notificationService.cancel(todo.id);
   }
 
   Future<void> setImportant(TodoItem todo, bool isImportant) async {
