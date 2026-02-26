@@ -1,10 +1,14 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist/main_screen.dart';
 import 'package:todolist/repositories/todo_repository.dart';
 import 'package:todolist/services/local_notification_service.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
+
+/// 홈 위젯에서 "메모 추가하기" 버튼 탭 여부를 Flutter 전역에서 감지하는 notifier
+final ValueNotifier<bool> quickAddNotifier = ValueNotifier(false);
 
 void main() async {
   // 1. Flutter 프레임워크와 네이티브 엔진 연결 보장
@@ -17,10 +21,14 @@ void main() async {
   // 3. 구글 모바일 광고 SDK 초기화
   await MobileAds.instance.initialize();
 
-  // // 4. 테스트 디바이스 설정 (에뮬레이터 해결)
-  // await MobileAds.instance.updateRequestConfiguration(
-  //   RequestConfiguration(testDeviceIds: ['E19E03387BD77FBE4D1C68A4910C2641']),
-  // );
+  // 4. 위젯 MethodChannel 등록 — Android 위젯에서 QUICK_ADD 수신 시 notifier 활성화
+  const widgetChannel = MethodChannel('com.perungi.todolist/widget');
+  widgetChannel.setMethodCallHandler((call) async {
+    if (call.method == 'quickAdd') {
+      quickAddNotifier.value = true;
+    }
+  });
+
   runApp(MyApp(notificationService: notificationService));
 }
 
@@ -101,8 +109,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToMain() async {
-    // Wait for at least 1.5 seconds to show the splash screen
-    // or wait until the ViewModel is initialized.
+    // 스플래시 최소 1.5초 표시
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
@@ -129,7 +136,6 @@ class _SplashScreenState extends State<SplashScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('img/todays_todo.png', fit: BoxFit.cover),
-          // Gradient overlay to ensure text/UI visibility if needed
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

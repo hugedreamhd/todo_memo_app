@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/repositories/todo_repository_interface.dart';
 import 'package:todolist/services/notification_service_interface.dart';
@@ -58,7 +59,31 @@ class TodoViewModel extends ChangeNotifier {
   Future<void> _saveAndNotify() async {
     _purgeExpiredDeleted();
     await _repository.saveTodos(_todos);
+    // 위젯 표시용: 활성 메모 개수를 SharedPreferences에 기록
+    // QuickAddWidget.kt가 'FlutterSharedPreferences' → 'flutter.todo_active_count' 키로 읽음
+    _saveActiveCountForWidget();
     notifyListeners();
+  }
+
+  /// 위젯에 표시할 활성 메모 개수 및 상위 3개 목록을 비동기로 저장
+  void _saveActiveCountForWidget() {
+    final activeTodos = visibleTodos;
+    final count = activeTodos.length;
+
+    // 상위 3개 메모 내용 (한 줄로 표시하기 위해 제목만 추출)
+    final top3Titles = activeTodos.take(3).map((e) => e.title).toList();
+
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt('todo_active_count', count);
+      // 기존 저장된 목록 초기화 (개수가 줄어들 경우 대비)
+      prefs.remove('todo_item_0');
+      prefs.remove('todo_item_1');
+      prefs.remove('todo_item_2');
+
+      for (var i = 0; i < top3Titles.length; i++) {
+        prefs.setString('todo_item_$i', top3Titles[i]);
+      }
+    });
   }
 
   Future<bool> addTodo(TodoItem todo) async {

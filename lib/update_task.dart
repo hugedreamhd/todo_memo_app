@@ -423,7 +423,11 @@ class _UpdateTaskState extends State<UpdateTask> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => setState(() => _reminder = null),
+                    onPressed:
+                        () => setState(() {
+                          _reminder = null;
+                          _repeatDaily = false; // 알림 삭제 시 반복도 함께 해제
+                        }),
                     child: const Text('중요알림 삭제'),
                   ),
                 ),

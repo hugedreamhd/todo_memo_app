@@ -1,10 +1,11 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:todolist/create_task.dart';
+import 'package:todolist/main.dart' show quickAddNotifier;
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/update_task.dart';
 import 'package:todolist/widgets/important_memo_sheet.dart';
@@ -18,7 +19,7 @@ const BorderRadius _taskBorderRadius = BorderRadius.all(
   Radius.circular(_taskCardRadius),
 );
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
   final bool isDarkMode;
 
@@ -27,6 +28,52 @@ class MainScreen extends StatelessWidget {
     required this.onToggleTheme,
     required this.isDarkMode,
   });
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 홈 위젯에서 탭 이벤트 감지 → 메모 추가 시트 자동 팝업
+    quickAddNotifier.addListener(_onQuickAddRequested);
+    // 앱이 위젯 탭으로 시작된 경우 즉시 처리
+    if (quickAddNotifier.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _triggerQuickAdd();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    quickAddNotifier.removeListener(_onQuickAddRequested);
+    super.dispose();
+  }
+
+  void _onQuickAddRequested() {
+    if (quickAddNotifier.value) {
+      _triggerQuickAdd();
+    }
+  }
+
+  void _triggerQuickAdd() {
+    quickAddNotifier.value = false; // 재실행 방지
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder:
+          (ctx) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: const CreateTask(),
+          ),
+    );
+  }
 
   void _showImportantMemoSheet(BuildContext rootContext) {
     showModalBottomSheet(
@@ -582,6 +629,8 @@ class MainScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final viewModel = context.watch<TodoViewModel>();
     final filteredTodos = viewModel.filteredTodos;
+    final onToggleTheme = widget.onToggleTheme;
+    final isDarkMode = widget.isDarkMode;
 
     return Scaffold(
       appBar: AppBar(
@@ -725,14 +774,6 @@ class MainScreen extends StatelessWidget {
                                                           color: Colors.black87,
                                                         ),
                                                   ),
-                                                  if (todo.imagePath !=
-                                                      null) ...[
-                                                    const SizedBox(height: 6),
-                                                    Row(children: [
-                                                        
-                                                      ],
-                                                    ),
-                                                  ],
                                                 ],
                                               ),
                                             ),
