@@ -1,14 +1,13 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:todolist/create_task.dart';
-import 'package:todolist/main.dart' show quickAddNotifier;
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/update_task.dart';
 import 'package:todolist/widgets/important_memo_sheet.dart';
 import 'package:todolist/widgets/info_chip.dart';
-import 'package:todolist/widgets/myBannerAdWidget.dart';
+import 'package:todolist/widgets/my_banner_ad_widget.dart';
 import 'package:todolist/widgets/swipe_action_tile.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
 import 'package:todolist/main.dart' show quickAddNotifier, openTodoIdNotifier;

@@ -3,7 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:io';
 
 class MyBannerAdWidget extends StatefulWidget {
-  const MyBannerAdWidget({Key? key}) : super(key: key);
+  const MyBannerAdWidget({super.key});
 
   @override
   State<MyBannerAdWidget> createState() => _MyBannerAdWidgetState();
