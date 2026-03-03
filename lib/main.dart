@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist/main_screen.dart';
 import 'package:todolist/repositories/todo_repository.dart';
+import 'package:todolist/services/widget_sync_service.dart';
 import 'package:todolist/services/local_notification_service.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
 
@@ -12,6 +14,28 @@ final ValueNotifier<bool> quickAddNotifier = ValueNotifier(false);
 
 /// 홈 위젯에서 특정 메모 아이템을 탭했을 때 열어야 할 todo id
 final ValueNotifier<String?> openTodoIdNotifier = ValueNotifier(null);
+
+@pragma('vm:entry-point')
+Future<void> backgroundCallback(Uri? uri) async {
+  if (uri?.scheme == 'myappwidget' && uri?.host == 'togglecompletion') {
+    final todoId = uri?.pathSegments.first;
+    if (todoId != null) {
+      final repository = TodoRepository();
+      var todos = await repository.loadTodos();
+      final index = todos.indexWhere((item) => item.id == todoId);
+      if (index != -1) {
+        todos[index] = todos[index].copyWith(
+          isCompleted: !todos[index].isCompleted,
+        );
+        await repository.saveTodos(todos);
+
+        final widgetSyncService = WidgetSyncService();
+        final visibleTodos = todos.where((t) => t.deletedAt == null).toList();
+        await widgetSyncService.updateWidgetData(visibleTodos);
+      }
+    }
+  }
+}
 
 void main() async {
   // 1. Flutter 프레임워크와 네이티브 엔진 연결 보장
@@ -24,7 +48,10 @@ void main() async {
   // 3. 구글 모바일 광고 SDK 초기화
   await MobileAds.instance.initialize();
 
-  // 4. 위젯 MethodChannel 등록 — Android 위젯에서 QUICK_ADD / OPEN_TODO 수신 시 notifier 활성화
+  // 4. 홈 위젯 백그라운드 콜백 등록
+  HomeWidget.registerBackgroundCallback(backgroundCallback);
+
+  // 5. 위젯 MethodChannel 등록 — Android 위젯에서 QUICK_ADD / OPEN_TODO 수신 시 notifier 활성화
   const widgetChannel = MethodChannel('com.belyself.todolist/widget');
   widgetChannel.setMethodCallHandler((call) async {
     switch (call.method) {

@@ -45,55 +45,80 @@ class QuickAddWidget : AppWidgetProvider() {
         ) {
             val views = RemoteViews(context.packageName, R.layout.quick_add_widget)
 
-            val prefs = context.getSharedPreferences(
-                "FlutterSharedPreferences",
-                Context.MODE_PRIVATE,
-            )
+            // HomeWidgetPlugin.getData returns the correct SharedPreferences
+            val prefs = es.antonborri.home_widget.HomeWidgetPlugin.getData(context)
             
-            // 메모 개수 및 목록 읽기
-            val count = prefs.getLong("flutter.todo_active_count", -1L)
+            val count = prefs.getInt("widget_memo_count", -1)
 
             if (count > 0) {
                 views.setViewVisibility(R.id.widget_todo_empty, View.GONE)
 
-                // 최대 3개 아이템 표시 처리
-                val itemIds = intArrayOf(R.id.todo_item_0, R.id.todo_item_1, R.id.todo_item_2)
                 for (i in 0..2) {
-                    val title = prefs.getString("flutter.todo_item_$i", null)
-                    val todoId = prefs.getString("flutter.todo_item_${i}_id", null)
-                    if (title != null) {
-                        views.setViewVisibility(itemIds[i], View.VISIBLE)
-                        views.setTextViewText(itemIds[i], "• $title")
+                    val containerId = context.resources.getIdentifier("todo_container_$i", "id", context.packageName)
+                    val titleId = context.resources.getIdentifier("todo_title_$i", "id", context.packageName)
+                    val checkId = context.resources.getIdentifier("todo_check_$i", "id", context.packageName)
+                    val importantId = context.resources.getIdentifier("todo_important_$i", "id", context.packageName)
 
-                        if (todoId != null) {
-                            val intent = Intent(context, MainActivity::class.java).apply {
-                                action = ACTION_OPEN_TODO
-                                putExtra(EXTRA_TODO_ID, todoId)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            }
-                            val pendingIntent = PendingIntent.getActivity(
-                                context,
-                                appWidgetId * 10 + i,
-                                intent,
-                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                            )
-                            views.setOnClickPendingIntent(itemIds[i], pendingIntent)
+                    val todoId = prefs.getString("widget_memo_${i}_id", null)
+                    val title = prefs.getString("widget_memo_${i}_title", null)
+                    val isCompleted = prefs.getBoolean("widget_memo_${i}_completed", false)
+                    val isImportant = prefs.getBoolean("widget_memo_${i}_important", false)
+
+                    if (title != null && todoId != null) {
+                        views.setViewVisibility(containerId, View.VISIBLE)
+                        views.setTextViewText(titleId, title)
+
+                        // 스타일 처리
+                        if (isCompleted) {
+                            views.setTextColor(titleId, android.graphics.Color.parseColor("#99FFFFFF"))
+                            views.setImageViewResource(checkId, R.drawable.ic_check_circle)
+                        } else {
+                            views.setTextColor(titleId, android.graphics.Color.parseColor("#FFFFFF"))
+                            views.setImageViewResource(checkId, R.drawable.ic_radio_button_unchecked)
                         }
+
+                        if (isImportant) {
+                            views.setViewVisibility(importantId, View.VISIBLE)
+                        } else {
+                            views.setViewVisibility(importantId, View.GONE)
+                        }
+
+                        // 전체 아이템 클릭 시 메인 앱의 해당 메모 열기
+                        val openIntent = Intent(context, MainActivity::class.java).apply {
+                            action = ACTION_OPEN_TODO
+                            putExtra(EXTRA_TODO_ID, todoId)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                        val openPendingIntent = PendingIntent.getActivity(
+                            context,
+                            appWidgetId * 10 + i,
+                            openIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        )
+                        views.setOnClickPendingIntent(containerId, openPendingIntent)
+
+                        // 체크박스 클릭 시 (백그라운드에서 상태 토글)
+                        val toggleIntent = es.antonborri.home_widget.HomeWidgetBackgroundIntent.getBroadcast(
+                            context,
+                            android.net.Uri.parse("myAppWidget://toggleCompletion/$todoId")
+                        )
+                        views.setOnClickPendingIntent(checkId, toggleIntent)
+                        
                     } else {
-                        views.setViewVisibility(itemIds[i], View.GONE)
+                        views.setViewVisibility(containerId, View.GONE)
                     }
                 }
             } else {
-                // 메모가 없거나 로드 전일 때
                 views.setViewVisibility(R.id.widget_todo_empty, View.VISIBLE)
-                views.setViewVisibility(R.id.todo_item_0, View.GONE)
-                views.setViewVisibility(R.id.todo_item_1, View.GONE)
-                views.setViewVisibility(R.id.todo_item_2, View.GONE)
+                val containers = intArrayOf(R.id.todo_container_0, R.id.todo_container_1, R.id.todo_container_2)
+                for (id in containers) {
+                    views.setViewVisibility(id, View.GONE)
+                }
                 
-                if (count == -1L) {
-                    views.setTextViewText(R.id.widget_todo_empty, "앱을 열어 메모를 관리하세요")
+                if (count == -1) {
+                    views.setTextViewText(R.id.widget_todo_empty, "앱을 열어 메모를 추가하세요")
                 } else {
-                    views.setTextViewText(R.id.widget_todo_empty, "바로메모를 시작해보세요 ✨")
+                    views.setTextViewText(R.id.widget_todo_empty, "위젯에 표시할 메모가 없어요 ✨\n앱에서 '위젯에 고정'을 눌러보세요.")
                 }
             }
 
