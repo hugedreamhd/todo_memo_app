@@ -211,6 +211,48 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   const SizedBox(height: 16),
                   FilledButton.icon(
+                    onPressed: () async {
+                      final success = await viewModel.toggleWidgetVisibility(
+                        todo.id,
+                      );
+                      if (!success && !todo.showOnWidget) {
+                        if (rootContext.mounted) {
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(rootContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('위젯에는 최대 3개의 메모만 고정할 수 있습니다.'),
+                            ),
+                          );
+                        }
+                      } else {
+                        if (rootContext.mounted) {
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(rootContext).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                todo.showOnWidget
+                                    ? '위젯 고정을 해제했습니다.'
+                                    : '위젯에 고정했습니다 📌',
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: Icon(
+                      todo.showOnWidget
+                          ? Icons.widgets
+                          : Icons.widgets_outlined,
+                    ),
+                    label: Text(todo.showOnWidget ? '위젯 고정 해제' : '위젯에 고정 📌'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      backgroundColor: theme.colorScheme.tertiaryContainer,
+                      foregroundColor: theme.colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
                     onPressed: () {
                       Navigator.pop(sheetContext);
                       showModalBottomSheet(
@@ -788,6 +830,34 @@ class _MainScreenState extends State<MainScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
+                                            GestureDetector(
+                                              onTap:
+                                                  () => viewModel
+                                                      .toggleCompletion(
+                                                        todo.id,
+                                                      ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 12,
+                                                  top: 2,
+                                                ),
+                                                child: Icon(
+                                                  todo.isCompleted
+                                                      ? Icons.check_circle
+                                                      : Icons
+                                                          .radio_button_unchecked,
+                                                  color:
+                                                      todo.isCompleted
+                                                          ? theme
+                                                              .colorScheme
+                                                              .primary
+                                                          : theme
+                                                              .colorScheme
+                                                              .outline,
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            ),
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment:
@@ -801,7 +871,22 @@ class _MainScreenState extends State<MainScreen> {
                                                         ?.copyWith(
                                                           fontWeight:
                                                               FontWeight.w600,
-                                                          color: Colors.black87,
+                                                          color:
+                                                              todo.isCompleted
+                                                                  ? theme
+                                                                      .colorScheme
+                                                                      .outline
+                                                                  : Colors
+                                                                      .black87,
+                                                          decoration:
+                                                              todo.isCompleted
+                                                                  ? TextDecoration
+                                                                      .lineThrough
+                                                                  : null,
+                                                          decorationColor:
+                                                              theme
+                                                                  .colorScheme
+                                                                  .outline,
                                                         ),
                                                   ),
                                                 ],
@@ -822,6 +907,11 @@ class _MainScreenState extends State<MainScreen> {
                                                     label: todo.tag,
                                                     icon: Icons.tag,
                                                   ),
+                                                  if (todo.showOnWidget)
+                                                    InfoChip(
+                                                      label: '위젯',
+                                                      icon: Icons.push_pin,
+                                                    ),
                                                   if (todo.reminder != null)
                                                     InfoChip(
                                                       label:

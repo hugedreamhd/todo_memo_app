@@ -267,6 +267,22 @@ class ImportantTodoTile extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  GestureDetector(
+                    onTap: () => viewModel.toggleCompletion(todo.id),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12, top: 2),
+                      child: Icon(
+                        todo.isCompleted
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color:
+                            todo.isCompleted
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline,
+                        size: 24,
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +291,15 @@ class ImportantTodoTile extends StatelessWidget {
                           todo.title,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87, // 블랙 계열로 고정
+                            color:
+                                todo.isCompleted
+                                    ? theme.colorScheme.outline
+                                    : Colors.black87,
+                            decoration:
+                                todo.isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                            decorationColor: theme.colorScheme.outline,
                           ),
                         ),
                         if (todo.imagePath != null) ...[
@@ -308,6 +332,8 @@ class ImportantTodoTile extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   InfoChip(label: todo.tag, icon: Icons.tag),
+                  if (todo.showOnWidget)
+                    InfoChip(label: '위젯', icon: Icons.push_pin),
                   if (todo.reminder != null)
                     InfoChip(
                       label: '${todo.reminder!.month}/${todo.reminder!.day}',
