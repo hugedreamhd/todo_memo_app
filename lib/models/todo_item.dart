@@ -11,6 +11,8 @@ class TodoItem {
   final DateTime createdAt;
   final String? imagePath;
   final DateTime? deletedAt;
+  final bool isCompleted;
+  final bool showOnWidget;
 
   TodoItem({
     required this.id,
@@ -22,6 +24,8 @@ class TodoItem {
     this.isHighlighted = false,
     this.imagePath,
     this.deletedAt,
+    this.isCompleted = false,
+    this.showOnWidget = false,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -37,6 +41,8 @@ class TodoItem {
     bool overrideImagePath = false,
     DateTime? deletedAt,
     bool overrideDeletedAt = false,
+    bool? isCompleted,
+    bool? showOnWidget,
   }) {
     return TodoItem(
       id: id,
@@ -48,6 +54,8 @@ class TodoItem {
       isHighlighted: isHighlighted ?? this.isHighlighted,
       imagePath: overrideImagePath ? imagePath : (imagePath ?? this.imagePath),
       deletedAt: overrideDeletedAt ? deletedAt : (deletedAt ?? this.deletedAt),
+      isCompleted: isCompleted ?? this.isCompleted,
+      showOnWidget: showOnWidget ?? this.showOnWidget,
       createdAt: createdAt,
     );
   }
@@ -69,6 +77,8 @@ class TodoItem {
           json['deletedAt'] != null
               ? DateTime.tryParse(json['deletedAt'] as String)
               : null,
+      isCompleted: json['isCompleted'] as bool? ?? false,
+      showOnWidget: json['showOnWidget'] as bool? ?? false,
       createdAt:
           json['createdAt'] != null
               ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
@@ -87,6 +97,8 @@ class TodoItem {
       'isHighlighted': isHighlighted,
       'imagePath': imagePath,
       'deletedAt': deletedAt?.toIso8601String(),
+      'isCompleted': isCompleted,
+      'showOnWidget': showOnWidget,
       'createdAt': createdAt.toIso8601String(),
     };
   }
