@@ -1,6 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:io';
 
 class MyBannerAdWidget extends StatefulWidget {
   const MyBannerAdWidget({super.key});
@@ -28,14 +29,14 @@ class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
   // 테스트 광고 ID (안드로이드 공식 테스트 ID)
   final String _adUnitId =
       Platform.isAndroid
-          ? 'ca-app-pub-4815364449744641~1293024349'
+          ? 'ca-app-pub-4815364449744641/8465296148'
           : 'ca-app-pub-3940256099942544/2435281174';
 
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //   _loadAd(); // Context를 사용할 수 있는 시점에 광고 로드
-  // }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadAd(); // Context를 사용할 수 있는 시점에 광고 로드
+  }
 
   Future<void> _loadAd() async {
     if (_isLoading || _isLoaded) return;
