@@ -37,7 +37,7 @@ class LocalNotificationService implements NotificationServiceInterface {
       iOS: iosSettings,
     );
 
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(settings: initSettings);
 
     // 3. Android 13+ 알림 권한 요청
     final androidPlugin =
@@ -140,19 +140,17 @@ class LocalNotificationService implements NotificationServiceInterface {
     final reminderTime = todo.reminder!;
 
     // 기존 알림 먼저 취소 (갱신 시 중복 방지)
-    await _plugin.cancel(id);
+    await _plugin.cancel(id: id);
 
     if (todo.repeatDaily) {
       // 매일 반복: DateTimeComponents.time 으로 매일 동일 시각에 발동
       await _plugin.zonedSchedule(
-        id,
-        '📌 ${todo.title}',
-        '바로메모를 확인하세요!',
-        _nextInstanceOfTime(reminderTime.hour, reminderTime.minute),
-        _notifDetails,
+        id: id,
+        scheduledDate: _nextInstanceOfTime(reminderTime.hour, reminderTime.minute),
+        notificationDetails: _notifDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        title: '📌 ${todo.title}',
+        body: '바로메모를 확인하세요!',
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } else {
@@ -164,21 +162,19 @@ class LocalNotificationService implements NotificationServiceInterface {
       }
 
       await _plugin.zonedSchedule(
-        id,
-        '📌 ${todo.title}',
-        '설정한 알림 시각이 되었습니다.',
-        scheduledTime,
-        _notifDetails,
+        id: id,
+        scheduledDate: scheduledTime,
+        notificationDetails: _notifDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        title: '📌 ${todo.title}',
+        body: '설정한 알림 시각이 되었습니다.',
       );
     }
   }
 
   @override
   Future<void> cancel(String todoId) async {
-    await _plugin.cancel(_notifId(todoId));
+    await _plugin.cancel(id: _notifId(todoId));
   }
 
   @override
