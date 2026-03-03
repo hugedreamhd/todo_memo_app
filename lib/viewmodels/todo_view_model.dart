@@ -1,14 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todolist/models/todo_item.dart';
 import 'package:todolist/repositories/todo_repository_interface.dart';
 import 'package:todolist/services/notification_service_interface.dart';
+import 'package:todolist/services/widget_sync_service.dart';
 
 class TodoViewModel extends ChangeNotifier {
   TodoViewModel(this._repository, this._notificationService);
 
   final TodoRepositoryInterface _repository;
   final NotificationServiceInterface _notificationService;
+  final WidgetSyncService _widgetSyncService = WidgetSyncService();
   List<TodoItem> _todos = [];
   static const Duration _deleteRetention = Duration(days: 3);
   bool _isLoading = true;
@@ -59,36 +60,9 @@ class TodoViewModel extends ChangeNotifier {
   Future<void> _saveAndNotify() async {
     _purgeExpiredDeleted();
     await _repository.saveTodos(_todos);
-    // 위젯 표시용: 활성 메모 개수를 SharedPreferences에 기록
-    // QuickAddWidget.kt가 'FlutterSharedPreferences' → 'flutter.todo_active_count' 키로 읽음
-    _saveActiveCountForWidget();
+    // 홈 위젯을 동기화합니다 (showOnWidget이 true인 항목 위주로 업데이트)
+    await _widgetSyncService.updateWidgetData(visibleTodos);
     notifyListeners();
-  }
-
-  /// 위젯에 표시할 활성 메모 개수 및 상위 3개 목록(제목 + id)을 비동기로 저장
-  void _saveActiveCountForWidget() {
-    final activeTodos = visibleTodos;
-    final count = activeTodos.length;
-
-    // 상위 3개 메모 (제목 + id)
-    final top3 = activeTodos.take(3).toList();
-
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setInt('todo_active_count', count);
-      // 기존 저장된 목록 초기화 (개수가 줄어들 경우 대비)
-      prefs.remove('todo_item_0');
-      prefs.remove('todo_item_1');
-      prefs.remove('todo_item_2');
-      prefs.remove('todo_item_0_id');
-      prefs.remove('todo_item_1_id');
-      prefs.remove('todo_item_2_id');
-
-      for (var i = 0; i < top3.length; i++) {
-        final todo = top3[i];
-        prefs.setString('todo_item_$i', todo.title);
-        prefs.setString('todo_item_${i}_id', todo.id);
-      }
-    });
   }
 
   Future<bool> addTodo(TodoItem todo) async {
@@ -154,6 +128,35 @@ class TodoViewModel extends ChangeNotifier {
     if (index == -1) return;
     _todos[index] = todo.copyWith(isHighlighted: isImportant);
     await _saveAndNotify();
+  }
+
+  Future<void> toggleCompletion(String id) async {
+    final index = _todos.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+    _todos[index] = _todos[index].copyWith(
+      isCompleted: !_todos[index].isCompleted,
+    );
+    await _saveAndNotify();
+  }
+
+  Future<bool> toggleWidgetVisibility(String id) async {
+    final index = _todos.indexWhere((item) => item.id == id);
+    if (index == -1) return false;
+
+    final isCurrentlyOnWidget = _todos[index].showOnWidget;
+
+    if (!isCurrentlyOnWidget) {
+      // 켜려고 할 때, 이미 3개가 켜져 있는지 확인
+      final currentWidgetCount =
+          _todos.where((t) => t.showOnWidget && t.deletedAt == null).length;
+      if (currentWidgetCount >= 3) {
+        return false; // 더 이상 추가 불가
+      }
+    }
+
+    _todos[index] = _todos[index].copyWith(showOnWidget: !isCurrentlyOnWidget);
+    await _saveAndNotify();
+    return true; // 성공적으로 토글됨
   }
 
   void setSearchQuery(String query) {
