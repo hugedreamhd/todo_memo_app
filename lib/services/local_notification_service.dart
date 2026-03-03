@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -149,7 +147,7 @@ class LocalNotificationService implements NotificationServiceInterface {
       await _plugin.zonedSchedule(
         id,
         '📌 ${todo.title}',
-        '오늘의 할 일을 확인하세요!',
+        '바로메모를 확인하세요!',
         _nextInstanceOfTime(reminderTime.hour, reminderTime.minute),
         _notifDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

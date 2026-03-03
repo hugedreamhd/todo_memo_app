@@ -1,7 +1,5 @@
-﻿import 'dart:io';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:todolist/create_task.dart';
@@ -13,6 +11,7 @@ import 'package:todolist/widgets/info_chip.dart';
 import 'package:todolist/widgets/myBannerAdWidget.dart';
 import 'package:todolist/widgets/swipe_action_tile.dart';
 import 'package:todolist/viewmodels/todo_view_model.dart';
+import 'package:todolist/main.dart' show quickAddNotifier, openTodoIdNotifier;
 
 const double _taskCardRadius = 20.0;
 const BorderRadius _taskBorderRadius = BorderRadius.all(
@@ -39,10 +38,18 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     // 홈 위젯에서 탭 이벤트 감지 → 메모 추가 시트 자동 팝업
     quickAddNotifier.addListener(_onQuickAddRequested);
+    // 홈 위젯에서 특정 메모 탭 이벤트 감지
+    openTodoIdNotifier.addListener(_onOpenTodoRequested);
     // 앱이 위젯 탭으로 시작된 경우 즉시 처리
     if (quickAddNotifier.value) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _triggerQuickAdd();
+      });
+    }
+    final initialTodoId = openTodoIdNotifier.value;
+    if (initialTodoId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openTodoById(initialTodoId);
       });
     }
   }
@@ -50,6 +57,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     quickAddNotifier.removeListener(_onQuickAddRequested);
+    openTodoIdNotifier.removeListener(_onOpenTodoRequested);
     super.dispose();
   }
 
@@ -57,6 +65,12 @@ class _MainScreenState extends State<MainScreen> {
     if (quickAddNotifier.value) {
       _triggerQuickAdd();
     }
+  }
+
+  void _onOpenTodoRequested() {
+    final todoId = openTodoIdNotifier.value;
+    if (todoId == null) return;
+    _openTodoById(todoId);
   }
 
   void _triggerQuickAdd() {
@@ -73,6 +87,23 @@ class _MainScreenState extends State<MainScreen> {
             child: const CreateTask(),
           ),
     );
+  }
+
+  void _openTodoById(String todoId) {
+    if (!mounted) return;
+    final viewModel = context.read<TodoViewModel>();
+    TodoItem? target;
+    try {
+      target = viewModel.visibleTodos.firstWhere((todo) => todo.id == todoId);
+    } catch (_) {
+      target = null;
+    }
+    if (target == null) return;
+    openTodoIdNotifier.value = null; // 한 번만 처리
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showTaskActionSheet(context, target!);
+    });
   }
 
   void _showImportantMemoSheet(BuildContext rootContext) {
@@ -634,7 +665,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('오늘의 할 일'),
+        title: const Text('바로메모'),
         centerTitle: true,
         actions: [
           IconButton(

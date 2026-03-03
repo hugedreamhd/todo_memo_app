@@ -10,9 +10,9 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="오늘의 할 일"
-        android:textColor="#99FFFFFF"
-        android:textSize="11sp" />
+        android:text="바로메모"
+            android:textColor="#99FFFFFF"
+            android:textSize="12sp" />
 
     <!-- 날짜 -->
     <TextClock
@@ -41,7 +41,7 @@
             android:maxLines="1"
             android:text=""
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:visibility="gone" />
 
         <TextView
@@ -53,7 +53,7 @@
             android:maxLines="1"
             android:text=""
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:visibility="gone" />
 
         <TextView
@@ -65,7 +65,7 @@
             android:maxLines="1"
             android:text=""
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:visibility="gone" />
             
         <TextView
@@ -74,7 +74,7 @@
             android:layout_height="wrap_content"
             android:text="오늘의 할 일을 추가해보세요 ✨"
             android:textColor="#BBFFFFFF"
-            android:textSize="12sp"
+            android:textSize="13sp"
             android:visibility="visible" />
     </LinearLayout>
 

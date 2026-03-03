@@ -65,13 +65,13 @@ class TodoViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 위젯에 표시할 활성 메모 개수 및 상위 3개 목록을 비동기로 저장
+  /// 위젯에 표시할 활성 메모 개수 및 상위 3개 목록(제목 + id)을 비동기로 저장
   void _saveActiveCountForWidget() {
     final activeTodos = visibleTodos;
     final count = activeTodos.length;
 
-    // 상위 3개 메모 내용 (한 줄로 표시하기 위해 제목만 추출)
-    final top3Titles = activeTodos.take(3).map((e) => e.title).toList();
+    // 상위 3개 메모 (제목 + id)
+    final top3 = activeTodos.take(3).toList();
 
     SharedPreferences.getInstance().then((prefs) {
       prefs.setInt('todo_active_count', count);
@@ -79,9 +79,14 @@ class TodoViewModel extends ChangeNotifier {
       prefs.remove('todo_item_0');
       prefs.remove('todo_item_1');
       prefs.remove('todo_item_2');
+      prefs.remove('todo_item_0_id');
+      prefs.remove('todo_item_1_id');
+      prefs.remove('todo_item_2_id');
 
-      for (var i = 0; i < top3Titles.length; i++) {
-        prefs.setString('todo_item_$i', top3Titles[i]);
+      for (var i = 0; i < top3.length; i++) {
+        final todo = top3[i];
+        prefs.setString('todo_item_$i', todo.title);
+        prefs.setString('todo_item_${i}_id', todo.id);
       }
     });
   }

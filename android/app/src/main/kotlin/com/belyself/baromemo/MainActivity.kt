@@ -1,6 +1,7 @@
-package com.perungi.todolist
+package com.belyself.baromemo
 
 import android.content.Intent
+import com.belyself.todolist.QuickAddWidget
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -8,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 
     companion object {
-        private const val CHANNEL = "com.perungi.todolist/widget"
+        private const val CHANNEL = "com.belyself.todolist/widget"
     }
 
     private var flutterChannel: MethodChannel? = null
@@ -39,8 +40,16 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.action == QuickAddWidget.ACTION_QUICK_ADD) {
-            flutterChannel?.invokeMethod("quickAdd", null)
+        when (intent?.action) {
+            QuickAddWidget.ACTION_QUICK_ADD -> {
+                flutterChannel?.invokeMethod("quickAdd", null)
+            }
+            QuickAddWidget.ACTION_OPEN_TODO -> {
+                val todoId = intent.getStringExtra(QuickAddWidget.EXTRA_TODO_ID)
+                if (todoId != null) {
+                    flutterChannel?.invokeMethod("openTodo", todoId)
+                }
+            }
         }
     }
 }
