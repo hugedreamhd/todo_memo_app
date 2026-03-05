@@ -2,15 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:todolist/create_task.dart';
-import 'package:todolist/models/todo_item.dart';
-import 'package:todolist/update_task.dart';
-import 'package:todolist/widgets/important_memo_sheet.dart';
-import 'package:todolist/widgets/info_chip.dart';
-import 'package:todolist/widgets/my_banner_ad_widget.dart';
-import 'package:todolist/widgets/swipe_action_tile.dart';
-import 'package:todolist/viewmodels/todo_view_model.dart';
-import 'package:todolist/main.dart' show quickAddNotifier, openTodoIdNotifier;
+import 'package:baromemo/create_task.dart';
+import 'package:baromemo/models/todo_item.dart';
+import 'package:baromemo/update_task.dart';
+import 'package:baromemo/widgets/important_memo_sheet.dart';
+import 'package:baromemo/widgets/info_chip.dart';
+import 'package:baromemo/widgets/my_banner_ad_widget.dart';
+import 'package:baromemo/widgets/swipe_action_tile.dart';
+import 'package:baromemo/viewmodels/todo_view_model.dart';
+import 'package:baromemo/main.dart' show quickAddNotifier, openTodoIdNotifier;
 
 const double _taskCardRadius = 20.0;
 const BorderRadius _taskBorderRadius = BorderRadius.all(

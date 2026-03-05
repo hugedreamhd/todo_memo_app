@@ -1,10 +1,10 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:todolist/models/todo_item.dart';
-import 'package:todolist/repositories/todo_repository_interface.dart';
+﻿import 'package:shared_preferences/shared_preferences.dart';
+import 'package:baromemo/models/todo_item.dart';
+import 'package:baromemo/repositories/todo_repository_interface.dart';
 
 class TodoRepository implements TodoRepositoryInterface {
-  static const _storageKey = 'todolist_v2';
-  static const _legacyKey = 'todolist';
+  static const _storageKey = 'baromemo_v1';
+  static const _legacyKey = 'baromemo_legacy';
 
   @override
   Future<List<TodoItem>> loadTodos() async {

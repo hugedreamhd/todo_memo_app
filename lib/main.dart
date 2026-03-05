@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:todolist/main_screen.dart';
-import 'package:todolist/repositories/todo_repository.dart';
-import 'package:todolist/services/widget_sync_service.dart';
-import 'package:todolist/services/local_notification_service.dart';
-import 'package:todolist/viewmodels/todo_view_model.dart';
+import 'package:baromemo/main_screen.dart';
+import 'package:baromemo/repositories/todo_repository.dart';
+import 'package:baromemo/services/widget_sync_service.dart';
+import 'package:baromemo/services/local_notification_service.dart';
+import 'package:baromemo/viewmodels/todo_view_model.dart';
 
 /// 홈 위젯에서 "메모 추가하기" 버튼 탭 여부를 Flutter 전역에서 감지하는 notifier
 final ValueNotifier<bool> quickAddNotifier = ValueNotifier(false);

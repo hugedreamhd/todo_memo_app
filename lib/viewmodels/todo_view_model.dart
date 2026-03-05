@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
-import 'package:todolist/models/todo_item.dart';
-import 'package:todolist/repositories/todo_repository_interface.dart';
-import 'package:todolist/services/notification_service_interface.dart';
-import 'package:todolist/services/widget_sync_service.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:baromemo/models/todo_item.dart';
+import 'package:baromemo/repositories/todo_repository_interface.dart';
+import 'package:baromemo/services/notification_service_interface.dart';
+import 'package:baromemo/services/widget_sync_service.dart';
 
 class TodoViewModel extends ChangeNotifier {
   TodoViewModel(this._repository, this._notificationService);
