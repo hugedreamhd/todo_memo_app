@@ -63,6 +63,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- home_widget: 백그라운드 클릭 이벤트를 수신하여 Flutter로 전달 -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
+
         <!-- 홈 위젯: 빠른 메모 추가 -->
         <receiver
             android:name=".QuickAddWidget"

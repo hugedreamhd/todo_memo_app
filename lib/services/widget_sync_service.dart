@@ -2,7 +2,8 @@ import 'package:home_widget/home_widget.dart';
 import 'package:todolist/models/todo_item.dart';
 
 class WidgetSyncService {
-  static const String androidWidgetName = 'QuickAddWidget'; // 위젯 클래스 이름과 매칭
+  static const String androidWidgetName =
+      'com.belyself.baromemo.QuickAddWidget'; // 전체 경로 사용
 
   Future<void> updateWidgetData(List<TodoItem> allVisibleTodos) async {
     // 1. showOnWidget이 true인 메모 최대 3개 추출

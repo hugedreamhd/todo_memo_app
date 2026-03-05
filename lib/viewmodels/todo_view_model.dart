@@ -60,13 +60,19 @@ class TodoViewModel extends ChangeNotifier {
   Future<void> _saveAndNotify() async {
     _purgeExpiredDeleted();
     await _repository.saveTodos(_todos);
-    // 홈 위젯을 동기화합니다 (showOnWidget이 true인 항목 위주로 업데이트)
-    await _widgetSyncService.updateWidgetData(visibleTodos);
+    try {
+      // 홈 위젯을 동기화합니다 (showOnWidget이 true인 항목 위주로 업데이트)
+      await _widgetSyncService.updateWidgetData(visibleTodos);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Widget sync failed: $e');
+      }
+    }
     notifyListeners();
   }
 
   Future<bool> addTodo(TodoItem todo) async {
-    final exists = _todos.any(
+    final exists = visibleTodos.any(
       (item) =>
           item.title.trim().toLowerCase() == todo.title.trim().toLowerCase(),
     );

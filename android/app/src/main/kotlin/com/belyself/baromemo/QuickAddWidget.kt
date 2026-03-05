@@ -1,4 +1,4 @@
-package com.belyself.todolist
+package com.belyself.baromemo
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -8,8 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
-import com.belyself.baromemo.MainActivity
-import com.belyself.baromemo.R
+import android.text.SpannableString
+import android.text.style.StrikethroughSpan
 
 class QuickAddWidget : AppWidgetProvider() {
 
@@ -24,8 +24,8 @@ class QuickAddWidget : AppWidgetProvider() {
     }
 
     companion object {
-        const val ACTION_QUICK_ADD = "com.belyself.todolist.QUICK_ADD"
-        const val ACTION_OPEN_TODO = "com.belyself.todolist.OPEN_TODO"
+        const val ACTION_QUICK_ADD = "com.belyself.baromemo.QUICK_ADD"
+        const val ACTION_OPEN_TODO = "com.belyself.baromemo.OPEN_TODO"
         const val EXTRA_TODO_ID = "extra_todo_id"
 
         fun updateAllWidgets(context: Context) {
@@ -66,16 +66,18 @@ class QuickAddWidget : AppWidgetProvider() {
 
                     if (title != null && todoId != null) {
                         views.setViewVisibility(containerId, View.VISIBLE)
-                        views.setTextViewText(titleId, title)
-
-                        // 스타일 처리
+                        
+                        // 제목 및 취소선(Strikethrough) 처리
+                        val spannableTitle = SpannableString(title)
                         if (isCompleted) {
+                            spannableTitle.setSpan(StrikethroughSpan(), 0, title.length, 0)
                             views.setTextColor(titleId, android.graphics.Color.parseColor("#99FFFFFF"))
                             views.setImageViewResource(checkId, R.drawable.ic_check_circle)
                         } else {
                             views.setTextColor(titleId, android.graphics.Color.parseColor("#FFFFFF"))
                             views.setImageViewResource(checkId, R.drawable.ic_radio_button_unchecked)
                         }
+                        views.setTextViewText(titleId, spannableTitle)
 
                         if (isImportant) {
                             views.setViewVisibility(importantId, View.VISIBLE)
@@ -83,7 +85,7 @@ class QuickAddWidget : AppWidgetProvider() {
                             views.setViewVisibility(importantId, View.GONE)
                         }
 
-                        // 전체 아이템 클릭 시 메인 앱의 해당 메모 열기
+                        // 제목 클릭 시 메인 앱의 해당 메모 열기
                         val openIntent = Intent(context, MainActivity::class.java).apply {
                             action = ACTION_OPEN_TODO
                             putExtra(EXTRA_TODO_ID, todoId)
@@ -95,12 +97,13 @@ class QuickAddWidget : AppWidgetProvider() {
                             openIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         )
-                        views.setOnClickPendingIntent(containerId, openPendingIntent)
+                        // 제목(titleId)에만 클릭 리스너 설정 (컨테이너나 배경X)
+                        views.setOnClickPendingIntent(titleId, openPendingIntent)
 
-                        // 체크박스 클릭 시 (백그라운드에서 상태 토글)
+                        // 체크박스 클릭 시 (백그라운드에서 상태 토글) - URI를 소문자로 변경하여 Dart와 맞춤
                         val toggleIntent = es.antonborri.home_widget.HomeWidgetBackgroundIntent.getBroadcast(
                             context,
-                            android.net.Uri.parse("myAppWidget://toggleCompletion/$todoId")
+                            android.net.Uri.parse("myappwidget://togglecompletion/$todoId")
                         )
                         views.setOnClickPendingIntent(checkId, toggleIntent)
                         

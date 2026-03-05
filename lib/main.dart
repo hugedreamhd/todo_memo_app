@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:home_widget/home_widget.dart';
@@ -17,6 +18,7 @@ final ValueNotifier<String?> openTodoIdNotifier = ValueNotifier(null);
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
+  if (kDebugMode) print('Widget Background Callback: $uri');
   if (uri?.scheme == 'myappwidget' && uri?.host == 'togglecompletion') {
     final todoId = uri?.pathSegments.first;
     if (todoId != null) {
@@ -31,6 +33,7 @@ Future<void> backgroundCallback(Uri? uri) async {
 
         final widgetSyncService = WidgetSyncService();
         final visibleTodos = todos.where((t) => t.deletedAt == null).toList();
+        // 최신순 또는 원래 순서 유지를 위해 별도 정렬 없이 전달
         await widgetSyncService.updateWidgetData(visibleTodos);
       }
     }
@@ -52,7 +55,7 @@ void main() async {
   HomeWidget.registerBackgroundCallback(backgroundCallback);
 
   // 5. 위젯 MethodChannel 등록 — Android 위젯에서 QUICK_ADD / OPEN_TODO 수신 시 notifier 활성화
-  const widgetChannel = MethodChannel('com.belyself.todolist/widget');
+  const widgetChannel = MethodChannel('com.belyself.baromemo/widget');
   widgetChannel.setMethodCallHandler((call) async {
     switch (call.method) {
       case 'quickAdd':

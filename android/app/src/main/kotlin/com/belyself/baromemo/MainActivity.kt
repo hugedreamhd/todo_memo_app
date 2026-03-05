@@ -1,7 +1,7 @@
 package com.belyself.baromemo
 
 import android.content.Intent
-import com.belyself.todolist.QuickAddWidget
+import com.belyself.baromemo.QuickAddWidget
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -9,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 
     companion object {
-        private const val CHANNEL = "com.belyself.todolist/widget"
+        private const val CHANNEL = "com.belyself.baromemo/widget"
     }
 
     private var flutterChannel: MethodChannel? = null
