@@ -31,9 +31,10 @@ Future<void> backgroundCallback(Uri? uri) async {
         );
         await repository.saveTodos(todos);
 
+        // 위젯 SharedPrefs를 실제 저장된 값으로 갱신해서 onUpdate 시 올바른 상태를 그리도록 합니다.
+        // (네이티브 optimistic 업데이트와 동기화)
         final widgetSyncService = WidgetSyncService();
         final visibleTodos = todos.where((t) => t.deletedAt == null).toList();
-        // 최신순 또는 원래 순서 유지를 위해 별도 정렬 없이 전달
         await widgetSyncService.updateWidgetData(visibleTodos);
       }
     }
@@ -95,10 +96,17 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create:
-          (_) =>
-              TodoViewModel(TodoRepository(), widget.notificationService)
-                ..initialize(),
+      create: (_) {
+        final vm = TodoViewModel(TodoRepository(), widget.notificationService)
+          ..initialize();
+        // 위젯에서 완료 토글이 발생했을 때 앱의 ViewModel을 최신 상태로 새로고침
+        HomeWidget.widgetClicked.listen((uri) {
+          if (uri?.scheme == 'myappwidget' && uri?.host == 'togglecompletion') {
+            vm.initialize();
+          }
+        });
+        return vm;
+      },
       child: MaterialApp(
         title: '바로메모',
         debugShowCheckedModeBanner: false,

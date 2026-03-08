@@ -17,6 +17,8 @@ class TodoTile extends StatelessWidget {
   final IconData saveIcon;
   final BorderRadius borderRadius;
   final Widget? trailing;
+  // Smart Queue: 어떤 메모가 위젯에 활성 표시 중인지 알기 위한 ID 집합
+  final Set<String> activeWidgetIds;
 
   const TodoTile({
     super.key,
@@ -33,6 +35,7 @@ class TodoTile extends StatelessWidget {
     this.saveIcon = Icons.save,
     this.borderRadius = const BorderRadius.all(Radius.circular(20.0)),
     this.trailing,
+    this.activeWidgetIds = const {},
   });
 
   @override
@@ -111,8 +114,21 @@ class TodoTile extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         InfoChip(label: todo.tag, icon: Icons.tag),
-                        if (todo.showOnWidget)
-                          InfoChip(label: '고정', icon: Icons.push_pin),
+                        // 스마트 큐: 위젯 고정 상태 표시
+                        if (todo.showOnWidget || todo.isHighlighted) ...[
+                          if (activeWidgetIds.contains(todo.id))
+                            InfoChip(
+                              label: '위젯 노출 중',
+                              icon: Icons.widgets,
+                              color: const Color(0xFF1976D2),
+                            )
+                          else
+                            InfoChip(
+                              label: '위젯 대기',
+                              icon: Icons.hourglass_top,
+                              color: const Color(0xFF9E9E9E),
+                            ),
+                        ],
                         if (todo.reminder != null)
                           InfoChip(
                             label:

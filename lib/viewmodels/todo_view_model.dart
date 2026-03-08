@@ -1,11 +1,28 @@
 ﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/repositories/todo_repository_interface.dart';
 import 'package:baromemo/services/notification_service_interface.dart';
 import 'package:baromemo/services/widget_sync_service.dart';
 
-class TodoViewModel extends ChangeNotifier {
-  TodoViewModel(this._repository, this._notificationService);
+class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
+  TodoViewModel(this._repository, this._notificationService) {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // 앱이 다시 포그라운드로 올 때 백그라운드 위젯 변경 사항을 화면에 반영
+      initialize();
+    }
+  }
 
   final TodoRepositoryInterface _repository;
   final NotificationServiceInterface _notificationService;
@@ -44,6 +61,16 @@ class TodoViewModel extends ChangeNotifier {
   Future<void> initialize() async {
     _todos = await _repository.loadTodos();
     _purgeExpiredDeleted();
+
+    // 앱 시작 시 위젯 데이터를 동기화하여 이전 데이터(Stale data)가 남지 않게 합니다.
+    try {
+      await _widgetSyncService.updateWidgetData(visibleTodos);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Initial widget sync failed: $e');
+      }
+    }
+
     _isLoading = false;
     notifyListeners();
   }
@@ -150,19 +177,21 @@ class TodoViewModel extends ChangeNotifier {
     if (index == -1) return false;
 
     final isCurrentlyOnWidget = _todos[index].showOnWidget;
-
-    if (!isCurrentlyOnWidget) {
-      // 켜려고 할 때, 이미 3개가 켜져 있는지 확인
-      final currentWidgetCount =
-          _todos.where((t) => t.showOnWidget && t.deletedAt == null).length;
-      if (currentWidgetCount >= 3) {
-        return false; // 더 이상 추가 불가
-      }
-    }
-
+    // 스마트 큐: 개수 제한 없이 핀 가능, 위젯은 알아서 상위 3개만 표시
     _todos[index] = _todos[index].copyWith(showOnWidget: !isCurrentlyOnWidget);
     await _saveAndNotify();
-    return true; // 성공적으로 토글됨
+    return true;
+  }
+
+  /// 현재 위젯에 실제로 '활성' 표시되는 메모 ID 집합 (미완료 기준 상위 3개)
+  Set<String> get activeWidgetIds {
+    final active =
+        visibleTodos
+            .where((t) => (t.showOnWidget || t.isHighlighted) && !t.isCompleted)
+            .take(3)
+            .map((t) => t.id)
+            .toSet();
+    return active;
   }
 
   void setSearchQuery(String query) {

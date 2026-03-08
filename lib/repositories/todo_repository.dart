@@ -9,6 +9,7 @@ class TodoRepository implements TodoRepositoryInterface {
   @override
   Future<List<TodoItem>> loadTodos() async {
     final prefs = await SharedPreferences.getInstance();
+    await prefs.reload(); // 백그라운드 isolate와 포그라운드 앱 간의 캐시 동기화를 위해 필수
     final raw = prefs.getString(_storageKey);
     if (raw != null) {
       return TodoItem.decodeList(raw);

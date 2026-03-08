@@ -2,29 +2,35 @@
 import 'package:baromemo/models/todo_item.dart';
 
 class WidgetSyncService {
-  static const String androidWidgetName =
-      'com.belyself.baromemo.QuickAddWidget'; // 전체 경로 사용
+  static const String androidWidgetName = 'QuickAddWidget';
 
   Future<void> updateWidgetData(List<TodoItem> allVisibleTodos) async {
-    // 1. showOnWidget이 true인 메모 최대 3개 추출
+    // 스마트 큐: (위젯 고정 OR 중요 메모) + 미완료 상태인 메모를 순서대로 최대 3개
     final widgetMemos =
-        allVisibleTodos.where((t) => t.showOnWidget).take(3).toList();
+        allVisibleTodos
+            .where((t) => (t.showOnWidget || t.isHighlighted) && !t.isCompleted)
+            .take(3)
+            .toList();
 
-    // 2. 위젯에 보여줄 개수 저장
+    // 위젯에 보여줄 개수 저장
     await HomeWidget.saveWidgetData<int>(
       'widget_memo_count',
       widgetMemos.length,
     );
 
-    // 3. 기존에 저장된 데이터 지우기 (최대 3개)
+    // 기존 데이터 초기화 (최대 3개)
     for (int i = 0; i < 3; i++) {
       await HomeWidget.saveWidgetData<String>('widget_memo_${i}_id', null);
       await HomeWidget.saveWidgetData<String>('widget_memo_${i}_title', null);
       await HomeWidget.saveWidgetData<bool>('widget_memo_${i}_completed', null);
       await HomeWidget.saveWidgetData<bool>('widget_memo_${i}_important', null);
+      await HomeWidget.saveWidgetData<bool>(
+        'widget_memo_${i}_highlighted',
+        null,
+      );
     }
 
-    // 4. 새로운 데이터 저장
+    // 새 데이터 저장
     for (int i = 0; i < widgetMemos.length; i++) {
       final memo = widgetMemos[i];
       await HomeWidget.saveWidgetData<String>('widget_memo_${i}_id', memo.id);
@@ -40,9 +46,14 @@ class WidgetSyncService {
         'widget_memo_${i}_important',
         memo.isHighlighted,
       );
+      // 중요 메모에서 온 경우 위젯에 표시할 별도 플래그
+      await HomeWidget.saveWidgetData<bool>(
+        'widget_memo_${i}_highlighted',
+        memo.isHighlighted,
+      );
     }
 
-    // 5. 위젯 업데이트 요청 (안드로이드)
+    // 위젯 갱신 요청
     await HomeWidget.updateWidget(androidName: androidWidgetName);
   }
 }
