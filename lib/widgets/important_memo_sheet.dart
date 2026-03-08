@@ -2,7 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:baromemo/models/todo_item.dart';
-import 'package:baromemo/update_task.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:baromemo/widgets/info_chip.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
@@ -146,6 +145,7 @@ class _ImportantMemoSheetContentState extends State<ImportantMemoSheetContent> {
                               viewModel: viewModel,
                               rootContext: widget.rootContext,
                               onShowActionSheet: widget.onShowTaskActionSheet,
+                              activeWidgetIds: viewModel.activeWidgetIds,
                             );
                           },
                         ),
@@ -163,6 +163,7 @@ class ImportantTodoTile extends StatelessWidget {
   final TodoViewModel viewModel;
   final BuildContext rootContext;
   final Function(BuildContext, TodoItem) onShowActionSheet;
+  final Set<String> activeWidgetIds;
 
   const ImportantTodoTile({
     super.key,
@@ -170,6 +171,7 @@ class ImportantTodoTile extends StatelessWidget {
     required this.viewModel,
     required this.rootContext,
     required this.onShowActionSheet,
+    this.activeWidgetIds = const {},
   });
 
   @override
@@ -332,8 +334,22 @@ class ImportantTodoTile extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   InfoChip(label: todo.tag, icon: Icons.tag),
-                  if (todo.showOnWidget)
-                    InfoChip(label: '위젯', icon: Icons.push_pin),
+                  // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
+                  if (!todo.isCompleted &&
+                      (todo.showOnWidget || todo.isHighlighted)) ...[
+                    if (activeWidgetIds.contains(todo.id))
+                      InfoChip(
+                        label: '위젯 노출 중',
+                        icon: Icons.widgets,
+                        color: const Color(0xFF1976D2),
+                      )
+                    else
+                      InfoChip(
+                        label: '위젯 대기',
+                        icon: Icons.hourglass_top,
+                        color: const Color(0xFF9E9E9E),
+                      ),
+                  ],
                   if (todo.reminder != null)
                     InfoChip(
                       label: '${todo.reminder!.month}/${todo.reminder!.day}',
@@ -401,24 +417,13 @@ class ImportantTodoTile extends StatelessWidget {
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(
-                      Icons.edit,
+                      Icons.drag_indicator,
                       color: Colors.black87,
-                    ), // 블랙 계열로 고정
+                    ),
                     tooltip: '메모 수정',
                     onPressed: () {
-                      Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: rootContext,
-                        isScrollControlled: true,
-                        builder: (context) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: MediaQuery.of(context).viewInsets.bottom,
-                            ),
-                            child: UpdateTask(todo: todo),
-                          );
-                        },
-                      );
+                      Navigator.pop(context); // 시트 닫기
+                      onShowActionSheet(rootContext, todo);
                     },
                   ),
                 ],

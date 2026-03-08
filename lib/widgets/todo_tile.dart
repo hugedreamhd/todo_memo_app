@@ -114,8 +114,9 @@ class TodoTile extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         InfoChip(label: todo.tag, icon: Icons.tag),
-                        // 스마트 큐: 위젯 고정 상태 표시
-                        if (todo.showOnWidget || todo.isHighlighted) ...[
+                        // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
+                        if (!todo.isCompleted &&
+                            (todo.showOnWidget || todo.isHighlighted)) ...[
                           if (activeWidgetIds.contains(todo.id))
                             InfoChip(
                               label: '위젯 노출 중',

@@ -207,8 +207,9 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       if (todo.repeatDaily)
                         InfoChip(label: '매일', icon: Icons.autorenew),
-                      // 스마트 큐 상태 표시
-                      if (todo.showOnWidget || todo.isHighlighted)
+                      // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
+                      if (!todo.isCompleted &&
+                          (todo.showOnWidget || todo.isHighlighted))
                         Builder(
                           builder: (ctx) {
                             // viewModel은 이 스코프에서 접근 가능
@@ -924,11 +925,30 @@ class _MainScreenState extends State<MainScreen> {
                                                     label: todo.tag,
                                                     icon: Icons.tag,
                                                   ),
-                                                  if (todo.showOnWidget)
-                                                    InfoChip(
-                                                      label: '위젯',
-                                                      icon: Icons.push_pin,
-                                                    ),
+                                                  // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
+                                                  if (!todo.isCompleted &&
+                                                      (todo.showOnWidget ||
+                                                          todo.isHighlighted)) ...[
+                                                    if (viewModel
+                                                        .activeWidgetIds
+                                                        .contains(todo.id))
+                                                      InfoChip(
+                                                        label: '위젯 노출 중',
+                                                        icon: Icons.widgets,
+                                                        color: const Color(
+                                                          0xFF1976D2,
+                                                        ),
+                                                      )
+                                                    else
+                                                      InfoChip(
+                                                        label: '위젯 대기',
+                                                        icon:
+                                                            Icons.hourglass_top,
+                                                        color: const Color(
+                                                          0xFF9E9E9E,
+                                                        ),
+                                                      ),
+                                                  ],
                                                   if (todo.reminder != null)
                                                     InfoChip(
                                                       label:
