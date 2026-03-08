@@ -5,10 +5,10 @@ class WidgetSyncService {
   static const String androidWidgetName = 'QuickAddWidget';
 
   Future<void> updateWidgetData(List<TodoItem> allVisibleTodos) async {
-    // 스마트 큐: (위젯 고정 OR 중요 메모) + 미완료 상태인 메모를 순서대로 최대 3개
+    // 스마트 큐: 위젯 고정에 체크된 미완료 상태인 메모 3개
     final widgetMemos =
         allVisibleTodos
-            .where((t) => (t.showOnWidget || t.isHighlighted) && !t.isCompleted)
+            .where((t) => t.showOnWidget && !t.isCompleted)
             .take(3)
             .toList();
 

@@ -115,21 +115,12 @@ class TodoTile extends StatelessWidget {
                       children: [
                         InfoChip(label: todo.tag, icon: Icons.tag),
                         // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
-                        if (!todo.isCompleted &&
-                            (todo.showOnWidget || todo.isHighlighted)) ...[
-                          if (activeWidgetIds.contains(todo.id))
-                            InfoChip(
-                              label: '위젯 노출 중',
-                              icon: Icons.widgets,
-                              color: const Color(0xFF1976D2),
-                            )
-                          else
-                            InfoChip(
-                              label: '위젯 대기',
-                              icon: Icons.hourglass_top,
-                              color: const Color(0xFF9E9E9E),
-                            ),
-                        ],
+                        if (!todo.isCompleted && todo.showOnWidget)
+                          InfoChip(
+                            label: '위젯 노출 중',
+                            icon: Icons.widgets,
+                            color: const Color(0xFF1976D2),
+                          ),
                         if (todo.reminder != null)
                           InfoChip(
                             label:

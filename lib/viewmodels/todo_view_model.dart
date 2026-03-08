@@ -177,17 +177,33 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     if (index == -1) return false;
 
     final isCurrentlyOnWidget = _todos[index].showOnWidget;
-    // 스마트 큐: 개수 제한 없이 핀 가능, 위젯은 알아서 상위 3개만 표시
+
+    if (!isCurrentlyOnWidget) {
+      final widgetCount = _todos.where((item) => item.showOnWidget).length;
+      if (widgetCount >= 3) {
+        return false; // 3개 제한
+      }
+    }
+
     _todos[index] = _todos[index].copyWith(showOnWidget: !isCurrentlyOnWidget);
     await _saveAndNotify();
     return true;
+  }
+
+  Future<void> reorderTodoToTop(String id) async {
+    final index = _todos.indexWhere((item) => item.id == id);
+    if (index <= 0) return; // 이미 맨 위거나 못 찾음
+
+    final item = _todos.removeAt(index);
+    _todos.insert(0, item);
+    await _saveAndNotify();
   }
 
   /// 현재 위젯에 실제로 '활성' 표시되는 메모 ID 집합 (미완료 기준 상위 3개)
   Set<String> get activeWidgetIds {
     final active =
         visibleTodos
-            .where((t) => (t.showOnWidget || t.isHighlighted) && !t.isCompleted)
+            .where((t) => t.showOnWidget && !t.isCompleted)
             .take(3)
             .map((t) => t.id)
             .toSet();

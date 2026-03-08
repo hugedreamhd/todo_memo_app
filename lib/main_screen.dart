@@ -208,24 +208,11 @@ class _MainScreenState extends State<MainScreen> {
                       if (todo.repeatDaily)
                         InfoChip(label: '매일', icon: Icons.autorenew),
                       // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
-                      if (!todo.isCompleted &&
-                          (todo.showOnWidget || todo.isHighlighted))
-                        Builder(
-                          builder: (ctx) {
-                            // viewModel은 이 스코프에서 접근 가능
-                            final active = viewModel.activeWidgetIds;
-                            return active.contains(todo.id)
-                                ? InfoChip(
-                                  label: '위젯 노출 중',
-                                  icon: Icons.widgets,
-                                  color: const Color(0xFF1976D2),
-                                )
-                                : InfoChip(
-                                  label: '위젯 대기',
-                                  icon: Icons.hourglass_top,
-                                  color: const Color(0xFF9E9E9E),
-                                );
-                          },
+                      if (!todo.isCompleted && todo.showOnWidget)
+                        InfoChip(
+                          label: '위젯 노출 중',
+                          icon: Icons.widgets,
+                          color: const Color(0xFF1976D2),
                         ),
                     ],
                   ),
@@ -237,30 +224,36 @@ class _MainScreenState extends State<MainScreen> {
                       );
                       if (rootContext.mounted) {
                         Navigator.pop(sheetContext);
-                        // 스마트 큐: 제한 없이 고정 가능, 대기열 메시지 표시
-                        final isNowOnWidget = !todo.showOnWidget;
-                        final isActive = viewModel.activeWidgetIds.contains(
-                          todo.id,
-                        );
-                        String message;
                         if (!success) {
-                          message = '위젯 고정을 해제했습니다.';
-                        } else if (isNowOnWidget && isActive) {
-                          message = '위젯에 바로 표시됩니다 📌';
-                        } else if (isNowOnWidget && !isActive) {
-                          message = '대기열에 추가했습니다. 위젯 빈자리가 생기면 자동으로 노출됩니다 ⚡️';
+                          ScaffoldMessenger.of(rootContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('위젯 노출은 3개까지만 가능합니다.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                         } else {
-                          message = '위젯 고정을 해제했습니다.';
+                          String message;
+                          final isNowOnWidget = !todo.showOnWidget;
+                          if (isNowOnWidget) {
+                            if (todo.isHighlighted) {
+                              await viewModel.reorderTodoToTop(todo.id);
+                              message = '중요 메모를 위젯 최상단에 고정했습니다 📌';
+                            } else {
+                              message = '위젯 고정을 활성화했습니다 📌';
+                            }
+                          } else {
+                            message = '위젯 고정을 해제했습니다.';
+                          }
+                          ScaffoldMessenger.of(
+                            rootContext,
+                          ).showSnackBar(SnackBar(content: Text(message)));
                         }
-                        ScaffoldMessenger.of(
-                          rootContext,
-                        ).showSnackBar(SnackBar(content: Text(message)));
                       }
                     },
                     icon: Icon(
                       todo.showOnWidget
-                          ? Icons.widgets
-                          : Icons.widgets_outlined,
+                          ? Icons.push_pin
+                          : Icons.push_pin_outlined,
                     ),
                     label: Text(todo.showOnWidget ? '위젯 고정 해제' : '위젯에 고정 📌'),
                     style: FilledButton.styleFrom(
@@ -927,28 +920,14 @@ class _MainScreenState extends State<MainScreen> {
                                                   ),
                                                   // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
                                                   if (!todo.isCompleted &&
-                                                      (todo.showOnWidget ||
-                                                          todo.isHighlighted)) ...[
-                                                    if (viewModel
-                                                        .activeWidgetIds
-                                                        .contains(todo.id))
-                                                      InfoChip(
-                                                        label: '위젯 노출 중',
-                                                        icon: Icons.widgets,
-                                                        color: const Color(
-                                                          0xFF1976D2,
-                                                        ),
-                                                      )
-                                                    else
-                                                      InfoChip(
-                                                        label: '위젯 대기',
-                                                        icon:
-                                                            Icons.hourglass_top,
-                                                        color: const Color(
-                                                          0xFF9E9E9E,
-                                                        ),
+                                                      todo.showOnWidget)
+                                                    InfoChip(
+                                                      label: '위젯 노출 중',
+                                                      icon: Icons.widgets,
+                                                      color: const Color(
+                                                        0xFF1976D2,
                                                       ),
-                                                  ],
+                                                    ),
                                                   if (todo.reminder != null)
                                                     InfoChip(
                                                       label:
@@ -1054,6 +1033,82 @@ class _MainScreenState extends State<MainScreen> {
                                                               ),
                                                             ),
                                                           );
+                                                        }
+                                                      }
+                                                    },
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  IconButton(
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    icon: Icon(
+                                                      todo.showOnWidget
+                                                          ? Icons.push_pin
+                                                          : Icons
+                                                              .push_pin_outlined,
+                                                      color: Colors.redAccent,
+                                                      size: 20,
+                                                    ),
+                                                    tooltip: '위젯에 고정',
+                                                    onPressed: () async {
+                                                      final success =
+                                                          await viewModel
+                                                              .toggleWidgetVisibility(
+                                                                todo.id,
+                                                              );
+                                                      if (context.mounted) {
+                                                        if (!success) {
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text(
+                                                                '위젯 노출은 3개까지만 가능합니다.',
+                                                              ),
+                                                              duration:
+                                                                  Duration(
+                                                                    seconds: 2,
+                                                                  ),
+                                                            ),
+                                                          );
+                                                        } else {
+                                                          final isNowOnWidget =
+                                                              !todo
+                                                                  .showOnWidget;
+                                                          if (isNowOnWidget) {
+                                                            String message;
+                                                            if (todo
+                                                                .isHighlighted) {
+                                                              await viewModel
+                                                                  .reorderTodoToTop(
+                                                                    todo.id,
+                                                                  );
+                                                              message =
+                                                                  '중요 메모를 위젯 최상단에 고정했습니다 📌';
+                                                            } else {
+                                                              message =
+                                                                  '위젯 고정을 활성화했습니다 📌';
+                                                            }
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  message,
+                                                                ),
+                                                              ),
+                                                            );
+                                                          } else {
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                  '위젯 고정을 해제했습니다.',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          }
                                                         }
                                                       }
                                                     },
