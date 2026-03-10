@@ -13,50 +13,6 @@ import android.text.SpannableString
 
 class QuickAddWidget : AppWidgetProvider() {
 
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_TOGGLE_COMPLETION) {
-            val todoId = intent.getStringExtra(EXTRA_TODO_ID)
-            val index = intent.getIntExtra("extra_index", -1)
-
-            if (todoId != null && index != -1) {
-                val prefs = es.antonborri.home_widget.HomeWidgetPlugin.getData(context)
-                val actualIndex = resolveSlotIndex(prefs, todoId, index)
-                val completedKey = "widget_memo_${actualIndex}_completed"
-                val isCompleted = !prefs.getBoolean(completedKey, false)
-                prefs.edit().putBoolean(completedKey, isCompleted).apply()
-
-                val appWidgetManager = AppWidgetManager.getInstance(context)
-                val appWidgetIds = appWidgetManager.getAppWidgetIds(
-                    ComponentName(context, QuickAddWidget::class.java),
-                )
-                val titleId = context.resources.getIdentifier("todo_title_$actualIndex", "id", context.packageName)
-
-                // 완료 시에는 텍스트 색만 어둡게 바꿉니다.
-                for (appWidgetId in appWidgetIds) {
-                    val partialViews = RemoteViews(context.packageName, R.layout.quick_add_widget)
-                    partialViews.setTextColor(
-                        titleId,
-                        if (isCompleted) {
-                            android.graphics.Color.parseColor("#8A96A3")
-                        } else if (prefs.getBoolean("widget_memo_${actualIndex}_highlighted", false)) {
-                            android.graphics.Color.parseColor("#FFD700")
-                        } else {
-                            android.graphics.Color.parseColor("#FFFFFF")
-                        },
-                    )
-                    appWidgetManager.partiallyUpdateAppWidget(appWidgetId, partialViews)
-                }
-
-                val backgroundIntent = es.antonborri.home_widget.HomeWidgetBackgroundIntent.getBroadcast(
-                    context,
-                    android.net.Uri.parse("myappwidget://togglecompletion/$todoId")
-                )
-                backgroundIntent.send()
-            }
-        }
-        super.onReceive(context, intent)
-    }
-
     data class WidgetMemoSlot(
         val todoId: String,
         val title: String,
@@ -78,7 +34,6 @@ class QuickAddWidget : AppWidgetProvider() {
     companion object {
         const val ACTION_QUICK_ADD = "com.belyself.baromemo.QUICK_ADD"
         const val ACTION_OPEN_TODO = "com.belyself.baromemo.OPEN_TODO"
-        const val ACTION_TOGGLE_COMPLETION = "com.belyself.baromemo.TOGGLE_COMPLETION"
         const val EXTRA_TODO_ID = "extra_todo_id"
 
         fun updateAllWidgets(context: Context) {
@@ -135,17 +90,6 @@ class QuickAddWidget : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        private fun resolveSlotIndex(
-            prefs: SharedPreferences,
-            todoId: String,
-            fallbackIndex: Int,
-        ): Int {
-            val matchedIndex = (0..2).firstOrNull { index ->
-                prefs.getString("widget_memo_${index}_id", null) == todoId
-            }
-            return matchedIndex ?: fallbackIndex
-        }
-
         private fun readWidgetSlots(prefs: SharedPreferences): List<WidgetMemoSlot> {
             return (0..2).mapNotNull { index ->
                 val todoId = prefs.getString("widget_memo_${index}_id", null)
@@ -198,11 +142,10 @@ class QuickAddWidget : AppWidgetProvider() {
         ) {
             val containerId = context.resources.getIdentifier("todo_container_$index", "id", context.packageName)
             val titleId = context.resources.getIdentifier("todo_title_$index", "id", context.packageName)
-            val checkId = context.resources.getIdentifier("todo_check_$index", "id", context.packageName)
             val importantId = context.resources.getIdentifier("todo_important_$index", "id", context.packageName)
+            val chevronId = context.resources.getIdentifier("todo_chevron_$index", "id", context.packageName)
 
             views.setViewVisibility(containerId, View.VISIBLE)
-            views.setViewVisibility(checkId, View.GONE)
 
             val displayTitle = if (slot.isHighlighted) "★ ${slot.title}" else slot.title
             views.setTextViewText(titleId, SpannableString(displayTitle))
@@ -218,20 +161,20 @@ class QuickAddWidget : AppWidgetProvider() {
             )
             views.setViewVisibility(importantId, if (slot.isImportant) View.VISIBLE else View.GONE)
 
-            val toggleIntent = Intent(context, QuickAddWidget::class.java).apply {
-                action = ACTION_TOGGLE_COMPLETION
+            val openIntent = Intent(context, MainActivity::class.java).apply {
+                action = ACTION_OPEN_TODO
                 putExtra(EXTRA_TODO_ID, slot.todoId)
-                putExtra("extra_index", index)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val togglePendingIntent = PendingIntent.getBroadcast(
+            val openPendingIntent = PendingIntent.getActivity(
                 context,
-                appWidgetId * 100 + index,
-                toggleIntent,
+                appWidgetId * 10 + index,
+                openIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            views.setOnClickPendingIntent(containerId, togglePendingIntent)
-            views.setOnClickPendingIntent(titleId, togglePendingIntent)
-            views.setOnClickPendingIntent(checkId, togglePendingIntent)
+            views.setOnClickPendingIntent(containerId, openPendingIntent)
+            views.setOnClickPendingIntent(titleId, openPendingIntent)
+            views.setOnClickPendingIntent(chevronId, openPendingIntent)
         }
 
         private fun clearTodoSlot(

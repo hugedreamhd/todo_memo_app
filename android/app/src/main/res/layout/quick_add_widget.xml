@@ -40,21 +40,20 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:background="@drawable/widget_row_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:layout_marginTop="4dp"
             android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/todo_check_0"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_radio_button_unchecked" />
 
             <TextView
                 android:id="@+id/todo_title_0"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="#FFFFFF"
@@ -64,9 +63,15 @@
                 android:id="@+id/todo_important_0"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:src="@drawable/ic_star"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/todo_chevron_0"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right" />
         </LinearLayout>
 
         <!-- Item 1 -->
@@ -76,21 +81,20 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:background="@drawable/widget_row_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:layout_marginTop="6dp"
             android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/todo_check_1"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_radio_button_unchecked" />
 
             <TextView
                 android:id="@+id/todo_title_1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="#FFFFFF"
@@ -100,9 +104,15 @@
                 android:id="@+id/todo_important_1"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:src="@drawable/ic_star"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/todo_chevron_1"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right" />
         </LinearLayout>
 
         <!-- Item 2 -->
@@ -112,21 +122,20 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:background="@drawable/widget_row_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:layout_marginTop="6dp"
             android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/todo_check_2"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_radio_button_unchecked" />
 
             <TextView
                 android:id="@+id/todo_title_2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="#FFFFFF"
@@ -136,9 +145,15 @@
                 android:id="@+id/todo_important_2"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:src="@drawable/ic_star"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/todo_chevron_2"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right" />
         </LinearLayout>
             
         <TextView
