@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -6,7 +6,6 @@ import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:baromemo/main_screen.dart';
 import 'package:baromemo/repositories/todo_repository.dart';
-import 'package:baromemo/services/widget_sync_service.dart';
 import 'package:baromemo/services/local_notification_service.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 
@@ -30,12 +29,6 @@ Future<void> backgroundCallback(Uri? uri) async {
           isCompleted: !todos[index].isCompleted,
         );
         await repository.saveTodos(todos);
-
-        // 위젯 SharedPrefs를 실제 저장된 값으로 갱신해서 onUpdate 시 올바른 상태를 그리도록 합니다.
-        // (네이티브 optimistic 업데이트와 동기화)
-        final widgetSyncService = WidgetSyncService();
-        final visibleTodos = todos.where((t) => t.deletedAt == null).toList();
-        await widgetSyncService.updateWidgetData(visibleTodos);
       }
     }
   }
@@ -99,10 +92,9 @@ class _MyAppState extends State<MyApp> {
       create: (_) {
         final vm = TodoViewModel(TodoRepository(), widget.notificationService)
           ..initialize();
-        // 위젯에서 완료 토글이 발생했을 때 앱의 ViewModel을 최신 상태로 새로고침
         HomeWidget.widgetClicked.listen((uri) {
           if (uri?.scheme == 'myappwidget' && uri?.host == 'togglecompletion') {
-            vm.initialize();
+            vm.initialize(syncWidget: false);
           }
         });
         return vm;

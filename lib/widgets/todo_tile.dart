@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/widgets/info_chip.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
@@ -114,8 +114,8 @@ class TodoTile extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         InfoChip(label: todo.tag, icon: Icons.tag),
-                        // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
-                        if (!todo.isCompleted && todo.showOnWidget)
+                        // 실제로 위젯에 표시 중인 메모는 완료 여부와 관계없이 표시합니다.
+                        if (activeWidgetIds.contains(todo.id))
                           InfoChip(
                             label: '위젯 노출 중',
                             icon: Icons.widgets,

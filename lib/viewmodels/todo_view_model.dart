@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/repositories/todo_repository_interface.dart';
@@ -58,16 +58,18 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     }).toList();
   }
 
-  Future<void> initialize() async {
+  Future<void> initialize({bool syncWidget = true}) async {
     _todos = await _repository.loadTodos();
     _purgeExpiredDeleted();
 
-    // 앱 시작 시 위젯 데이터를 동기화하여 이전 데이터(Stale data)가 남지 않게 합니다.
-    try {
-      await _widgetSyncService.updateWidgetData(visibleTodos);
-    } catch (e) {
-      if (kDebugMode) {
-        print('Initial widget sync failed: $e');
+    if (syncWidget) {
+      // 앱 시작 시 위젯 데이터를 동기화하여 이전 데이터(Stale data)가 남지 않게 합니다.
+      try {
+        await _widgetSyncService.updateWidgetData(visibleTodos);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Initial widget sync failed: $e');
+        }
       }
     }
 
@@ -128,6 +130,7 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     _todos[index] = _todos[index].copyWith(
       deletedAt: DateTime.now(),
       overrideDeletedAt: true,
+      showOnWidget: false,
     );
     await _saveAndNotify();
     // 삭제 시 알림 취소
@@ -179,7 +182,8 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     final isCurrentlyOnWidget = _todos[index].showOnWidget;
 
     if (!isCurrentlyOnWidget) {
-      final widgetCount = _todos.where((item) => item.showOnWidget).length;
+      final widgetCount =
+          visibleTodos.where((item) => item.showOnWidget).length;
       if (widgetCount >= 3) {
         return false; // 3개 제한
       }
@@ -199,11 +203,11 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     await _saveAndNotify();
   }
 
-  /// 현재 위젯에 실제로 '활성' 표시되는 메모 ID 집합 (미완료 기준 상위 3개)
+  /// 현재 위젯에 실제로 표시되는 메모 ID 집합 (상위 3개)
   Set<String> get activeWidgetIds {
     final active =
         visibleTodos
-            .where((t) => t.showOnWidget && !t.isCompleted)
+            .where((t) => t.showOnWidget)
             .take(3)
             .map((t) => t.id)
             .toSet();

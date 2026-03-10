@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -207,8 +207,8 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       if (todo.repeatDaily)
                         InfoChip(label: '매일', icon: Icons.autorenew),
-                      // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
-                      if (!todo.isCompleted && todo.showOnWidget)
+                      // 실제로 위젯에 표시 중인 메모만 상태를 보여줍니다.
+                      if (viewModel.activeWidgetIds.contains(todo.id))
                         InfoChip(
                           label: '위젯 노출 중',
                           icon: Icons.widgets,

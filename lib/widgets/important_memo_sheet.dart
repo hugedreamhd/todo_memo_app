@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:baromemo/models/todo_item.dart';
@@ -396,7 +396,7 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
                 runSpacing: 8,
                 children: [
                   InfoChip(label: widget.todo.tag, icon: Icons.tag),
-                  if (!widget.todo.isCompleted && widget.todo.showOnWidget)
+                  if (widget.todo.showOnWidget)
                     const InfoChip(
                       label: '위젯 노출 중',
                       icon: Icons.widgets,
