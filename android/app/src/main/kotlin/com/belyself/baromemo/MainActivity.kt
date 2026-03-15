@@ -43,12 +43,14 @@ class MainActivity : FlutterActivity() {
         when (intent?.action) {
             QuickAddWidget.ACTION_QUICK_ADD -> {
                 flutterChannel?.invokeMethod("quickAdd", null)
+                intent.action = null
             }
             QuickAddWidget.ACTION_OPEN_TODO -> {
                 val todoId = intent.getStringExtra(QuickAddWidget.EXTRA_TODO_ID)
                 if (todoId != null) {
                     flutterChannel?.invokeMethod("openTodo", todoId)
                 }
+                intent.action = null
             }
         }
     }

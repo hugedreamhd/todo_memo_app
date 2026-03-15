@@ -19,8 +19,9 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // 앱이 다시 포그라운드로 올 때 백그라운드 위젯 변경 사항을 화면에 반영
-      initialize();
+      // 앱이 다시 포그라운드로 올 때 백그라운드 위젯 변경 사항 화면 반영
+      // 위젯 데이터는 이미 최신이므로 불필요한 위젯 동기화를 방지하여 로딩 속도 개선
+      initialize(syncWidget: false);
     }
   }
 
@@ -62,19 +63,23 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
     _todos = await _repository.loadTodos();
     _purgeExpiredDeleted();
 
+    _isLoading = false;
+    notifyListeners(); // 화면 렌더링에 필요한 데이터 업데이트 즉시 반영
+
     if (syncWidget) {
-      // 앱 시작 시 위젯 데이터를 동기화하여 이전 데이터(Stale data)가 남지 않게 합니다.
-      try {
-        await _widgetSyncService.updateWidgetData(visibleTodos);
-      } catch (e) {
-        if (kDebugMode) {
-          print('Initial widget sync failed: $e');
-        }
+      // 위젯 동기화는 앱 렌더링을 멈추지 않도록 백그라운드로 실행
+      _syncWidgetDataSafely();
+    }
+  }
+
+  Future<void> _syncWidgetDataSafely() async {
+    try {
+      await _widgetSyncService.updateWidgetData(visibleTodos);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Widget sync failed: $e');
       }
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   void _purgeExpiredDeleted() {

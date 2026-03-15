@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <!-- 날짜 -->
     <TextClock
@@ -21,7 +21,8 @@
     <LinearLayout
         android:id="@+id/widget_todo_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginTop="8dp"
         android:orientation="vertical">
 
@@ -35,9 +36,9 @@
             android:background="@drawable/widget_row_bg"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="4dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_marginTop="2dp"
             android:visibility="gone">
 
             <TextView
@@ -76,9 +77,9 @@
             android:background="@drawable/widget_row_bg"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="6dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone">
 
             <TextView
@@ -117,9 +118,9 @@
             android:background="@drawable/widget_row_bg"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:layout_marginTop="6dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone">
 
             <TextView
@@ -158,21 +159,16 @@
             android:visibility="visible" />
     </LinearLayout>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
     <!-- 메모 추가 (텍스트만) -->
     <LinearLayout
         android:id="@+id/btn_quick_add"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
 
         <TextView
             android:layout_width="wrap_content"
