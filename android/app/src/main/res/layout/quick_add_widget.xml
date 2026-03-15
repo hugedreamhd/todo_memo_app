@@ -6,14 +6,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 헤더: 앱 이름 -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="바로메모"
-            android:textColor="#99FFFFFF"
-            android:textSize="12sp" />
-
     <!-- 날짜 -->
     <TextClock
         android:id="@+id/widget_date"
@@ -171,22 +163,22 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 메모 추가 버튼 -->
+    <!-- 메모 추가 (텍스트만) -->
     <LinearLayout
         android:id="@+id/btn_quick_add"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/widget_button_bg"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="＋  메모 추가하기"
-            android:textColor="#FFFFFF"
+            android:text=" + 메모 추가하기"
+            android:textColor="#99FFFFFF"
             android:textSize="13sp" />
     </LinearLayout>
 

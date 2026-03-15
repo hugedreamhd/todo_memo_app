@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -99,6 +99,8 @@ class _MainScreenState extends State<MainScreen> {
     }
     if (target == null) return;
     openTodoIdNotifier.value = null; // 한 번만 처리
+    // 위젯에서 열었을 때 뒤에 남아 있는 다른 메모 시트/화면 제거
+    Navigator.of(context).popUntil((route) => route.isFirst);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _showTaskActionSheet(context, target!);
@@ -223,7 +225,10 @@ class _MainScreenState extends State<MainScreen> {
                         todo.id,
                       );
                       if (rootContext.mounted) {
-                        Navigator.pop(sheetContext);
+                        // 뒤에 남아 있을 수 있는 다른 메모 시트까지 모두 닫고 메인으로
+                        Navigator.of(
+                          rootContext,
+                        ).popUntil((route) => route.isFirst);
                         if (!success) {
                           ScaffoldMessenger.of(rootContext).showSnackBar(
                             const SnackBar(
