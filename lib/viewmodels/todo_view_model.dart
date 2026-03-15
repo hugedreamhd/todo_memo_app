@@ -101,11 +101,7 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<bool> addTodo(TodoItem todo) async {
-    final exists = visibleTodos.any(
-      (item) =>
-          item.title.trim().toLowerCase() == todo.title.trim().toLowerCase(),
-    );
-    if (exists) return false;
+    // 제목이나 이미지와 상관없이 항상 새 메모로 추가합니다.
     _todos.insert(0, todo);
     await _saveAndNotify();
     // 알림 예약 (reminder 있을 때만)

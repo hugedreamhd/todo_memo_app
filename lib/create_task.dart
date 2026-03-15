@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -98,25 +98,7 @@ class _CreateTaskState extends State<CreateTask> {
       imagePath: _imagePath,
     );
     final viewModel = context.read<TodoViewModel>();
-    final success = await viewModel.addTodo(todo);
-    if (!success && mounted) {
-      showDialog(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('알림'),
-            content: const Text('이미 동일한 메모가 있어요. 다른 내용을 입력해 주세요.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('확인'),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
+    await viewModel.addTodo(todo);
     if (!mounted) return;
     Navigator.pop(context);
     setState(() {
