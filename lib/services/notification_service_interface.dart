@@ -1,8 +1,11 @@
-﻿import 'package:baromemo/models/todo_item.dart';
+import 'package:baromemo/models/todo_item.dart';
 
 abstract class NotificationServiceInterface {
-  /// 알림 서비스를 초기화하고 권한을 요청합니다.
+  /// 알림 서비스를 초기화합니다.
   Future<void> initialize();
+
+  /// 알림 관련 권한을 요청합니다.
+  Future<void> requestPermissions();
 
   /// [todo]의 reminder가 있으면 알림을 예약(또는 갱신)합니다.
   /// reminder가 없으면 기존 알림을 취소합니다.

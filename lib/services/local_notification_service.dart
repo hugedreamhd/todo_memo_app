@@ -1,4 +1,4 @@
-﻿import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:baromemo/models/todo_item.dart';
@@ -25,7 +25,7 @@ class LocalNotificationService implements NotificationServiceInterface {
     }
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@mipmap/launcher_icon',
     );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -38,8 +38,11 @@ class LocalNotificationService implements NotificationServiceInterface {
     );
 
     await _plugin.initialize(settings: initSettings);
+  }
 
-    // 3. Android 13+ 알림 권한 요청
+  @override
+  Future<void> requestPermissions() async {
+    // Android 13+ 알림 권한 및 정확한 알람 예약 권한 요청
     final androidPlugin =
         _plugin
             .resolvePlatformSpecificImplementation<
