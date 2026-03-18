@@ -11,6 +11,8 @@ import 'package:baromemo/widgets/my_banner_ad_widget.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:baromemo/main.dart' show quickAddNotifier, openTodoIdNotifier;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 const double _taskCardRadius = 20.0;
 const BorderRadius _taskBorderRadius = BorderRadius.all(
@@ -32,8 +34,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final GlobalKey _settingKey = GlobalKey(); // 말풍선 띄울 위젯 키
+
   @override
   void initState() {
+    // 앱 최초 실행 시 팝업
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkFirstTime());
+
     super.initState();
     // 홈 위젯에서 탭 이벤트 감지 → 메모 추가 시트 자동 팝업
     quickAddNotifier.addListener(_onQuickAddRequested);
@@ -50,6 +57,17 @@ class _MainScreenState extends State<MainScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _openTodoById(initialTodoId);
       });
+    }
+  }
+
+  Future<void> _checkFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isFirstTime = prefs.getBool('show_guide') ?? true;
+    if (isFirstTime) {
+      //가이드를 시작
+      ShowcaseView.get().startShowCase([_settingKey]);
+      //가이드를 다 보여주면 false로 변경
+      await prefs.setBool('show_guide', false);
     }
   }
 
@@ -720,171 +738,181 @@ class _MainScreenState extends State<MainScreen> {
     final onToggleTheme = widget.onToggleTheme;
     final isDarkMode = widget.isDarkMode;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('바로메모'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: '최근 삭제',
-            onPressed: () => _showDeletedMemoSheet(context),
-          ),
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: onToggleTheme,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: '메모 검색',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onChanged: viewModel.setSearchQuery,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '메모를 오른쪽에서 왼쪽으로 스와이프해 저장/삭제를 할 수 있어요.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+    return ShowCaseWidget(
+      builder: (context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('바로메모'),
+            centerTitle: true,
+            actions: [
+              //가이드 버튼
+              Showcase(
+                key: _settingKey,
+                description: '삭제한 메모는 휴지통에서 확인할 수 있어요',
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: '최근 삭제',
+                  onPressed: () => _showDeletedMemoSheet(context),
                 ),
               ),
-              const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    DropdownButton<String>(
-                      value: viewModel.tagFilter,
-                      items: const [
-                        DropdownMenuItem(value: '전체', child: Text('전체 태그')),
-                        DropdownMenuItem(value: '일반', child: Text('일반')),
-                        DropdownMenuItem(value: '개인', child: Text('개인')),
-                        DropdownMenuItem(value: '업무', child: Text('업무')),
-                        DropdownMenuItem(value: '건강', child: Text('건강')),
-                        DropdownMenuItem(value: '학습', child: Text('학습')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          viewModel.setTagFilter(value);
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child:
-                    filteredTodos.isEmpty
-                        ? Center(
-                          child: Text(
-                            '표시할 메모가 없어요 :)',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                        )
-                        : ReorderableListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          buildDefaultDragHandles: false,
-                          onReorder:
-                              (oldIndex, newIndex) =>
-                                  viewModel.reorderVisibleTodos(
-                                    filteredTodos,
-                                    oldIndex,
-                                    newIndex,
-                                  ),
-                          itemCount: filteredTodos.length,
-                          itemBuilder: (context, index) {
-                            final todo = filteredTodos[index];
 
-                            return Padding(
-                              key: ValueKey(todo.id),
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: SwipeActionTile(
-                                onSave:
-                                    () => _handleSaveTodo(
-                                      context,
-                                      viewModel,
-                                      todo,
-                                    ),
-                                onDelete:
-                                    () => _handleDeleteTodo(
-                                      context,
-                                      viewModel,
-                                      todo,
-                                    ),
-                                saveColor: const Color(0xFFFFD54F),
-                                deleteColor: const Color(0xFFFF5C5C),
-                                saveLabel: '저장',
-                                deleteLabel: '삭제',
-                                saveIcon: Icons.save,
-                                deleteIcon: Icons.delete,
-                                maxSlideFactor: 0.33,
-                                childBorderRadius: _taskBorderRadius,
-                                isHighlighted: todo.isHighlighted,
-                                child: GestureDetector(
-                                  onTap:
-                                      () => _showTaskActionSheet(context, todo),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+              IconButton(
+                icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                onPressed: onToggleTheme,
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: '메모 검색',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onChanged: viewModel.setSearchQuery,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '메모를 오른쪽에서 왼쪽으로 스와이프해 저장/삭제를 할 수 있어요.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        DropdownButton<String>(
+                          value: viewModel.tagFilter,
+                          items: const [
+                            DropdownMenuItem(value: '전체', child: Text('전체 태그')),
+                            DropdownMenuItem(value: '일반', child: Text('일반')),
+                            DropdownMenuItem(value: '개인', child: Text('개인')),
+                            DropdownMenuItem(value: '업무', child: Text('업무')),
+                            DropdownMenuItem(value: '건강', child: Text('건강')),
+                            DropdownMenuItem(value: '학습', child: Text('학습')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              viewModel.setTagFilter(value);
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child:
+                        filteredTodos.isEmpty
+                            ? Center(
+                              child: Text(
+                                '표시할 메모가 없어요 :)',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                            )
+                            : ReorderableListView.builder(
+                              padding: const EdgeInsets.only(bottom: 80),
+                              buildDefaultDragHandles: false,
+                              onReorder:
+                                  (oldIndex, newIndex) =>
+                                      viewModel.reorderVisibleTodos(
+                                        filteredTodos,
+                                        oldIndex,
+                                        newIndex,
+                                      ),
+                              itemCount: filteredTodos.length,
+                              itemBuilder: (context, index) {
+                                final todo = filteredTodos[index];
+
+                                return Padding(
+                                  key: ValueKey(todo.id),
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: SwipeActionTile(
+                                    onSave:
+                                        () => _handleSaveTodo(
+                                          context,
+                                          viewModel,
+                                          todo,
+                                        ),
+                                    onDelete:
+                                        () => _handleDeleteTodo(
+                                          context,
+                                          viewModel,
+                                          todo,
+                                        ),
+                                    saveColor: const Color(0xFFFFD54F),
+                                    deleteColor: const Color(0xFFFF5C5C),
+                                    saveLabel: '저장',
+                                    deleteLabel: '삭제',
+                                    saveIcon: Icons.save,
+                                    deleteIcon: Icons.delete,
+                                    maxSlideFactor: 0.33,
+                                    childBorderRadius: _taskBorderRadius,
+                                    isHighlighted: todo.isHighlighted,
+                                    child: GestureDetector(
+                                      onTap:
+                                          () => _showTaskActionSheet(
+                                            context,
+                                            todo,
+                                          ),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            GestureDetector(
-                                              onTap:
-                                                  () => viewModel
-                                                      .toggleCompletion(
-                                                        todo.id,
-                                                      ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                  right: 12,
-                                                  top: 2,
-                                                ),
-                                                child: Icon(
-                                                  todo.isCompleted
-                                                      ? Icons.check_circle
-                                                      : Icons
-                                                          .radio_button_unchecked,
-                                                  color:
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap:
+                                                      () => viewModel
+                                                          .toggleCompletion(
+                                                            todo.id,
+                                                          ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          right: 12,
+                                                          top: 2,
+                                                        ),
+                                                    child: Icon(
                                                       todo.isCompleted
-                                                          ? theme
-                                                              .colorScheme
-                                                              .primary
-                                                          : theme
-                                                              .colorScheme
-                                                              .outline,
-                                                  size: 24,
+                                                          ? Icons.check_circle
+                                                          : Icons
+                                                              .radio_button_unchecked,
+                                                      color:
+                                                          todo.isCompleted
+                                                              ? theme
+                                                                  .colorScheme
+                                                                  .primary
+                                                              : theme
+                                                                  .colorScheme
+                                                                  .outline,
+                                                      size: 24,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    todo.title,
-                                                    style: theme
-                                                        .textTheme
-                                                        .titleMedium
-                                                        ?.copyWith(
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        todo.title,
+                                                        style: theme.textTheme.titleMedium?.copyWith(
                                                           fontWeight:
                                                               FontWeight.w600,
                                                           color:
@@ -904,324 +932,339 @@ class _MainScreenState extends State<MainScreen> {
                                                                   .colorScheme
                                                                   .outline,
                                                         ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Wrap(
-                                                spacing: 8,
-                                                runSpacing: 8,
-                                                children: [
-                                                  InfoChip(
-                                                    label: todo.tag,
-                                                    icon: Icons.tag,
-                                                  ),
-                                                  // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
-                                                  if (!todo.isCompleted &&
-                                                      todo.showOnWidget)
-                                                    InfoChip(
-                                                      label: '위젯 노출 중',
-                                                      icon: Icons.widgets,
-                                                      color: const Color(
-                                                        0xFF1976D2,
                                                       ),
-                                                    ),
-                                                  if (todo.reminder != null)
-                                                    InfoChip(
-                                                      label:
-                                                          '${todo.reminder!.month}/${todo.reminder!.day} ${todo.reminder!.hour.toString().padLeft(2, '0')}:${todo.reminder!.minute.toString().padLeft(2, '0')}',
-                                                      icon: Icons.alarm,
-                                                    ),
-                                                  if (todo.repeatDaily)
-                                                    InfoChip(
-                                                      label: '매일',
-                                                      icon: Icons.autorenew,
-                                                    ),
-                                                  if (todo.imagePath != null)
-                                                    InfoChip(
-                                                      label: '',
-                                                      icon: Icons.image,
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Align(
-                                              alignment: Alignment.bottomCenter,
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  IconButton(
-                                                    visualDensity:
-                                                        VisualDensity.compact,
-                                                    icon: Icon(
-                                                      todo.isHighlighted
-                                                          ? Icons.star
-                                                          : Icons.star_border,
-                                                    ),
-                                                    color: const Color(
-                                                      0xFF00796B,
-                                                    ), // Deep Teal for better visibility on light background
-                                                    tooltip:
-                                                        todo.isHighlighted
-                                                            ? '일반 메모로 이동'
-                                                            : '중요 메모로 이동',
-                                                    onPressed: () async {
-                                                      final confirm = await showDialog<
-                                                        bool
-                                                      >(
-                                                        context: context,
-                                                        builder: (
-                                                          dialogContext,
-                                                        ) {
-                                                          return AlertDialog(
-                                                            title: Text(
-                                                              todo.isHighlighted
-                                                                  ? '일반 메모로 이동'
-                                                                  : '중요 메모로 이동',
-                                                            ),
-                                                            content: Text(
-                                                              todo.isHighlighted
-                                                                  ? '이 메모를 일반 메모로 이동할까요?'
-                                                                  : '이 메모를 중요 메모로 이동할까요?',
-                                                            ),
-                                                            actions: [
-                                                              TextButton(
-                                                                onPressed:
-                                                                    () => Navigator.pop(
-                                                                      dialogContext,
-                                                                      false,
-                                                                    ),
-                                                                child:
-                                                                    const Text(
-                                                                      '취소',
-                                                                    ),
-                                                              ),
-                                                              FilledButton(
-                                                                onPressed:
-                                                                    () => Navigator.pop(
-                                                                      dialogContext,
-                                                                      true,
-                                                                    ),
-                                                                child:
-                                                                    const Text(
-                                                                      '이동',
-                                                                    ),
-                                                              ),
-                                                            ],
-                                                          );
-                                                        },
-                                                      );
-                                                      if (confirm == true) {
-                                                        await viewModel
-                                                            .setImportant(
-                                                              todo,
-                                                              !todo
-                                                                  .isHighlighted,
-                                                            );
-                                                        if (context.mounted) {
-                                                          ScaffoldMessenger.of(
-                                                            context,
-                                                          ).showSnackBar(
-                                                            SnackBar(
-                                                              content: Text(
-                                                                todo.isHighlighted
-                                                                    ? '\'${todo.title}\'이(가) 일반 메모로 이동했어요'
-                                                                    : '\'${todo.title}\'이(가) 중요 메모로 이동했어요',
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }
-                                                      }
-                                                    },
+                                                    ],
                                                   ),
-                                                  const SizedBox(width: 4),
-                                                  IconButton(
-                                                    visualDensity:
-                                                        VisualDensity.compact,
-                                                    icon: Icon(
-                                                      todo.showOnWidget
-                                                          ? Icons.push_pin
-                                                          : Icons
-                                                              .push_pin_outlined,
-                                                      color: Colors.redAccent,
-                                                      size: 20,
-                                                    ),
-                                                    tooltip: '위젯에 고정',
-                                                    onPressed: () async {
-                                                      final success =
-                                                          await viewModel
-                                                              .toggleWidgetVisibility(
-                                                                todo.id,
-                                                              );
-                                                      if (context.mounted) {
-                                                        if (!success) {
-                                                          ScaffoldMessenger.of(
-                                                            context,
-                                                          ).showSnackBar(
-                                                            const SnackBar(
-                                                              content: Text(
-                                                                '위젯 노출은 3개까지만 가능합니다.',
-                                                              ),
-                                                              duration:
-                                                                  Duration(
-                                                                    seconds: 2,
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Wrap(
+                                                    spacing: 8,
+                                                    runSpacing: 8,
+                                                    children: [
+                                                      InfoChip(
+                                                        label: todo.tag,
+                                                        icon: Icons.tag,
+                                                      ),
+                                                      // 스마트 큐 상태 표시 (완료되지 않은 경우에만 표시)
+                                                      if (!todo.isCompleted &&
+                                                          todo.showOnWidget)
+                                                        InfoChip(
+                                                          label: '위젯 노출 중',
+                                                          icon: Icons.widgets,
+                                                          color: const Color(
+                                                            0xFF1976D2,
+                                                          ),
+                                                        ),
+                                                      if (todo.reminder != null)
+                                                        InfoChip(
+                                                          label:
+                                                              '${todo.reminder!.month}/${todo.reminder!.day} ${todo.reminder!.hour.toString().padLeft(2, '0')}:${todo.reminder!.minute.toString().padLeft(2, '0')}',
+                                                          icon: Icons.alarm,
+                                                        ),
+                                                      if (todo.repeatDaily)
+                                                        InfoChip(
+                                                          label: '매일',
+                                                          icon: Icons.autorenew,
+                                                        ),
+                                                      if (todo.imagePath !=
+                                                          null)
+                                                        InfoChip(
+                                                          label: '',
+                                                          icon: Icons.image,
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Align(
+                                                  alignment:
+                                                      Alignment.bottomCenter,
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      IconButton(
+                                                        visualDensity:
+                                                            VisualDensity
+                                                                .compact,
+                                                        icon: Icon(
+                                                          todo.isHighlighted
+                                                              ? Icons.star
+                                                              : Icons
+                                                                  .star_border,
+                                                        ),
+                                                        color: const Color(
+                                                          0xFF00796B,
+                                                        ), // Deep Teal for better visibility on light background
+                                                        tooltip:
+                                                            todo.isHighlighted
+                                                                ? '일반 메모로 이동'
+                                                                : '중요 메모로 이동',
+                                                        onPressed: () async {
+                                                          final confirm = await showDialog<
+                                                            bool
+                                                          >(
+                                                            context: context,
+                                                            builder: (
+                                                              dialogContext,
+                                                            ) {
+                                                              return AlertDialog(
+                                                                title: Text(
+                                                                  todo.isHighlighted
+                                                                      ? '일반 메모로 이동'
+                                                                      : '중요 메모로 이동',
+                                                                ),
+                                                                content: Text(
+                                                                  todo.isHighlighted
+                                                                      ? '이 메모를 일반 메모로 이동할까요?'
+                                                                      : '이 메모를 중요 메모로 이동할까요?',
+                                                                ),
+                                                                actions: [
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () => Navigator.pop(
+                                                                          dialogContext,
+                                                                          false,
+                                                                        ),
+                                                                    child:
+                                                                        const Text(
+                                                                          '취소',
+                                                                        ),
                                                                   ),
-                                                            ),
+                                                                  FilledButton(
+                                                                    onPressed:
+                                                                        () => Navigator.pop(
+                                                                          dialogContext,
+                                                                          true,
+                                                                        ),
+                                                                    child:
+                                                                        const Text(
+                                                                          '이동',
+                                                                        ),
+                                                                  ),
+                                                                ],
+                                                              );
+                                                            },
                                                           );
-                                                        } else {
-                                                          final isNowOnWidget =
-                                                              !todo
-                                                                  .showOnWidget;
-                                                          if (isNowOnWidget) {
-                                                            String message;
-                                                            if (todo
-                                                                .isHighlighted) {
+                                                          if (confirm == true) {
+                                                            await viewModel
+                                                                .setImportant(
+                                                                  todo,
+                                                                  !todo
+                                                                      .isHighlighted,
+                                                                );
+                                                            if (context
+                                                                .mounted) {
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    todo.isHighlighted
+                                                                        ? '\'${todo.title}\'이(가) 일반 메모로 이동했어요'
+                                                                        : '\'${todo.title}\'이(가) 중요 메모로 이동했어요',
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            }
+                                                          }
+                                                        },
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      IconButton(
+                                                        visualDensity:
+                                                            VisualDensity
+                                                                .compact,
+                                                        icon: Icon(
+                                                          todo.showOnWidget
+                                                              ? Icons.push_pin
+                                                              : Icons
+                                                                  .push_pin_outlined,
+                                                          color:
+                                                              Colors.redAccent,
+                                                          size: 20,
+                                                        ),
+                                                        tooltip: '위젯에 고정',
+                                                        onPressed: () async {
+                                                          final success =
                                                               await viewModel
-                                                                  .reorderTodoToTop(
+                                                                  .toggleWidgetVisibility(
                                                                     todo.id,
                                                                   );
-                                                              message =
-                                                                  '중요 메모를 위젯 최상단에 고정했습니다 📌';
+                                                          if (context.mounted) {
+                                                            if (!success) {
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                    '위젯 노출은 3개까지만 가능합니다.',
+                                                                  ),
+                                                                  duration:
+                                                                      Duration(
+                                                                        seconds:
+                                                                            2,
+                                                                      ),
+                                                                ),
+                                                              );
                                                             } else {
-                                                              message =
-                                                                  '위젯 고정을 활성화했습니다 📌';
+                                                              final isNowOnWidget =
+                                                                  !todo
+                                                                      .showOnWidget;
+                                                              if (isNowOnWidget) {
+                                                                String message;
+                                                                if (todo
+                                                                    .isHighlighted) {
+                                                                  await viewModel
+                                                                      .reorderTodoToTop(
+                                                                        todo.id,
+                                                                      );
+                                                                  message =
+                                                                      '중요 메모를 위젯 최상단에 고정했습니다 📌';
+                                                                } else {
+                                                                  message =
+                                                                      '위젯 고정을 활성화했습니다 📌';
+                                                                }
+                                                                ScaffoldMessenger.of(
+                                                                  context,
+                                                                ).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                      message,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              } else {
+                                                                ScaffoldMessenger.of(
+                                                                  context,
+                                                                ).showSnackBar(
+                                                                  const SnackBar(
+                                                                    content: Text(
+                                                                      '위젯 고정을 해제했습니다.',
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              }
                                                             }
-                                                            ScaffoldMessenger.of(
-                                                              context,
-                                                            ).showSnackBar(
-                                                              SnackBar(
-                                                                content: Text(
-                                                                  message,
-                                                                ),
-                                                              ),
-                                                            );
-                                                          } else {
-                                                            ScaffoldMessenger.of(
-                                                              context,
-                                                            ).showSnackBar(
-                                                              const SnackBar(
-                                                                content: Text(
-                                                                  '위젯 고정을 해제했습니다.',
-                                                                ),
-                                                              ),
-                                                            );
                                                           }
-                                                        }
-                                                      }
-                                                    },
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.share,
-                                                      color: Colors.black87,
-                                                    ), // 블랙 계열로 고정
-                                                    tooltip: '공유하기',
-                                                    onPressed:
-                                                        () => Share.share(
-                                                          viewModel
-                                                              .buildShareText(
-                                                                todo,
+                                                        },
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                          Icons.share,
+                                                          color: Colors.black87,
+                                                        ), // 블랙 계열로 고정
+                                                        tooltip: '공유하기',
+                                                        onPressed:
+                                                            () => Share.share(
+                                                              viewModel
+                                                                  .buildShareText(
+                                                                    todo,
+                                                                  ),
+                                                            ),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      ReorderableDelayedDragStartListener(
+                                                        index: index,
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                4.0,
                                                               ),
+                                                          child: Icon(
+                                                            Icons
+                                                                .drag_indicator,
+                                                            color:
+                                                                Colors.black87,
+                                                          ),
                                                         ),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  ReorderableDelayedDragStartListener(
-                                                    index: index,
-                                                    child: const Padding(
-                                                      padding: EdgeInsets.all(
-                                                        4.0,
                                                       ),
-                                                      child: Icon(
-                                                        Icons.drag_indicator,
-                                                        color: Colors.black87,
-                                                      ),
-                                                    ),
+                                                    ],
                                                   ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            MyBannerAdWidget(), // 광고 배치
-            const SizedBox(height: 5),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: () => _showImportantMemoSheet(context),
-                      icon: const Icon(Icons.star),
-                      label: const Text(
-                        '중요 메모 보기',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF81ECE1),
-                        foregroundColor: Colors.black87,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    tooltip: '메모 추가',
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFF58D68D),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(10),
-                    ),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (context) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: MediaQuery.of(context).viewInsets.bottom,
+                                );
+                              },
                             ),
-                            child: const CreateTask(),
-                          );
-                        },
-                      );
-                    },
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MyBannerAdWidget(), // 광고 배치
+                const SizedBox(height: 5),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.tonalIcon(
+                          onPressed: () => _showImportantMemoSheet(context),
+                          icon: const Icon(Icons.star),
+                          label: const Text(
+                            '중요 메모 보기',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF81ECE1),
+                            foregroundColor: Colors.black87,
+                            minimumSize: const Size.fromHeight(52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        tooltip: '메모 추가',
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF58D68D),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(10),
+                        ),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (context) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom:
+                                      MediaQuery.of(context).viewInsets.bottom,
+                                ),
+                                child: const CreateTask(),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
