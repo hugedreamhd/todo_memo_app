@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -115,12 +116,17 @@ class LocalNotificationService implements NotificationServiceInterface {
   int _notifId(String todoId) => todoId.hashCode.abs() % 0x7FFFFFFF;
 
   AndroidNotificationDetails get _androidDetails =>
-      const AndroidNotificationDetails(
-        'todo_reminder_channel',
+      AndroidNotificationDetails(
+        'todo_reminder_channel_v2', // 채널 설정을 변경하기 위해 ID 수정
         '할 일 알림',
         channelDescription: '설정한 시각에 할 일을 알려드립니다.',
         importance: Importance.max,
         priority: Priority.high,
+        showWhen: true,
+        playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 1000, 500, 1000]),
+        onlyAlertOnce: false,
       );
 
   DarwinNotificationDetails get _iosDetails => const DarwinNotificationDetails(
@@ -184,6 +190,7 @@ class LocalNotificationService implements NotificationServiceInterface {
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
   }
+
 
   /// 오늘(또는 내일) [hour]:[minute]:00 에 해당하는 TZDateTime 반환
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
