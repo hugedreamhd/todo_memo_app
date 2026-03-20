@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/widgets/info_chip.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
+import 'package:baromemo/theme/app_theme.dart';
 
 class TodoTile extends StatelessWidget {
   final TodoItem todo;
@@ -12,7 +13,7 @@ class TodoTile extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback onEdit;
   final VoidCallback onToggleHighlight;
-  final Color saveColor;
+  final Color? saveColor;
   final String saveLabel;
   final IconData saveIcon;
   final BorderRadius borderRadius;
@@ -30,7 +31,7 @@ class TodoTile extends StatelessWidget {
     required this.onShare,
     required this.onEdit,
     required this.onToggleHighlight,
-    this.saveColor = const Color(0xFFFFD54F),
+    this.saveColor,
     this.saveLabel = '저장',
     this.saveIcon = Icons.save,
     this.borderRadius = const BorderRadius.all(Radius.circular(20.0)),
@@ -45,8 +46,8 @@ class TodoTile extends StatelessWidget {
     return SwipeActionTile(
       onSave: onSave,
       onDelete: onDelete,
-      saveColor: saveColor,
-      deleteColor: const Color(0xFFFF5C5C),
+      saveColor: saveColor ?? AppTheme.importantYellow,
+      deleteColor: AppTheme.warningRed,
       saveLabel: saveLabel,
       deleteLabel: '삭제',
       saveIcon: saveIcon,
@@ -119,7 +120,7 @@ class TodoTile extends StatelessWidget {
                           InfoChip(
                             label: '위젯 노출 중',
                             icon: Icons.widgets,
-                            color: const Color(0xFF1976D2),
+                            color: AppTheme.widgetAlert,
                           ),
                         if (todo.reminder != null)
                           InfoChip(

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:baromemo/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -217,7 +218,7 @@ class _MainScreenState extends State<MainScreen> {
                         InfoChip(
                           label: '위젯 노출 중',
                           icon: Icons.widgets,
-                          color: const Color(0xFF1976D2),
+                          color: AppTheme.widgetAlert,
                         ),
                     ],
                   ),
@@ -326,7 +327,7 @@ class _MainScreenState extends State<MainScreen> {
                                 onPressed:
                                     () => Navigator.pop(dialogContext, true),
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFF5C5C),
+                                  backgroundColor: AppTheme.warningRed,
                                 ),
                                 child: const Text('삭제'),
                               ),
@@ -350,7 +351,7 @@ class _MainScreenState extends State<MainScreen> {
                     label: const Text('메모 삭제'),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
-                      backgroundColor: const Color(0xFFFF5C5C),
+                      backgroundColor: AppTheme.warningRed,
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -656,7 +657,7 @@ class _MainScreenState extends State<MainScreen> {
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.amber,
+                backgroundColor: AppTheme.importantYellow,
                 foregroundColor: Colors.white,
               ),
               child: const Text('저장'),
@@ -861,8 +862,8 @@ class _MainScreenState extends State<MainScreen> {
                                           viewModel,
                                           todo,
                                         ),
-                                    saveColor: const Color(0xFFFFD54F),
-                                    deleteColor: const Color(0xFFFF5C5C),
+                                    saveColor: AppTheme.importantYellow,
+                                    deleteColor: AppTheme.warningRed,
                                     saveLabel: '저장',
                                     deleteLabel: '삭제',
                                     saveIcon: Icons.save,
@@ -968,9 +969,7 @@ class _MainScreenState extends State<MainScreen> {
                                                         InfoChip(
                                                           label: '위젯 노출 중',
                                                           icon: Icons.widgets,
-                                                          color: const Color(
-                                                            0xFF1976D2,
-                                                          ),
+                                                          color: AppTheme.widgetAlert,
                                                         ),
                                                       if (todo.reminder != null)
                                                         InfoChip(
@@ -1237,7 +1236,7 @@ class _MainScreenState extends State<MainScreen> {
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF81ECE1),
+                              backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.black87,
                               minimumSize: const Size.fromHeight(52),
                               shape: RoundedRectangleBorder(
@@ -1255,7 +1254,7 @@ class _MainScreenState extends State<MainScreen> {
                           icon: const Icon(Icons.add),
                           tooltip: '메모 추가',
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF58D68D),
+                            backgroundColor: AppTheme.pointGreen,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.all(10),
                           ),
@@ -1264,14 +1263,17 @@ class _MainScreenState extends State<MainScreen> {
                               context: context,
                               isScrollControlled: true,
                               builder: (context) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom:
-                                        MediaQuery.of(
-                                          context,
-                                        ).viewInsets.bottom,
+                                return FractionallySizedBox(
+                                  heightFactor: 0.8, //화면높이 80%
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom:
+                                          MediaQuery.of(
+                                            context,
+                                          ).viewInsets.bottom,
+                                    ),
+                                    child: const CreateTask(),
                                   ),
-                                  child: const CreateTask(),
                                 );
                               },
                             );

@@ -1,10 +1,11 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:baromemo/theme/app_theme.dart';
 
 class UpdateTask extends StatefulWidget {
   final TodoItem todo;
@@ -449,7 +450,7 @@ class _UpdateTaskState extends State<UpdateTask> {
                 onPressed: _submit,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
-                  backgroundColor: const Color(0xFF4C6EF5),
+                  backgroundColor: AppTheme.pointBlue,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),

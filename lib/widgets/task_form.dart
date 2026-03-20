@@ -1,8 +1,9 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/widgets/my_banner_ad_widget.dart';
+import 'package:baromemo/theme/app_theme.dart';
 
 class TaskForm extends StatefulWidget {
   final TodoItem? initialTodo;
@@ -368,7 +369,7 @@ class _TaskFormState extends State<TaskForm> {
           onPressed: _preSubmit,
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            backgroundColor: const Color(0xFF4C6EF5),
+            backgroundColor: AppTheme.pointBlue,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -9,6 +9,7 @@ import 'package:baromemo/repositories/todo_repository.dart';
 import 'package:baromemo/services/local_notification_service.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:baromemo/viewmodels/onboarding_view_model.dart';
+import 'package:baromemo/theme/app_theme.dart';
 
 /// 홈 위젯에서 "메모 추가하기" 버튼 탭 여부를 Flutter 전역에서 감지하는 notifier
 final ValueNotifier<bool> quickAddNotifier = ValueNotifier(false);
@@ -121,7 +122,7 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF81ECE1),
+            seedColor: AppTheme.primary,
             brightness: Brightness.light,
             surface: Colors.white,
           ),
@@ -130,7 +131,7 @@ class _MyAppState extends State<MyApp> {
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF81ECE1),
+            seedColor: AppTheme.primary,
             brightness: Brightness.dark,
           ),
           useMaterial3: true,

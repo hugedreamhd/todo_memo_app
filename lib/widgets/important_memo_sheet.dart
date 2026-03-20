@@ -5,6 +5,7 @@ import 'package:baromemo/models/todo_item.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:baromemo/widgets/info_chip.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
+import 'package:baromemo/theme/app_theme.dart';
 
 class ImportantMemoSheetContent extends StatefulWidget {
   final BuildContext rootContext;
@@ -289,7 +290,7 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
                 FilledButton(
                   onPressed: () => Navigator.pop(dialogContext, true),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5C5C),
+                    backgroundColor: AppTheme.warningRed,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('삭제'),
@@ -308,8 +309,8 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
           }
         }
       },
-      saveColor: const Color(0xFFFFD54F),
-      deleteColor: const Color(0xFFFF5C5C),
+      saveColor: AppTheme.importantYellow,
+      deleteColor: AppTheme.warningRed,
       saveLabel: '이동',
       deleteLabel: '삭제',
       saveIcon: Icons.home,
@@ -397,10 +398,10 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
                 children: [
                   InfoChip(label: widget.todo.tag, icon: Icons.tag),
                   if (widget.todo.showOnWidget)
-                    const InfoChip(
+                    InfoChip(
                       label: '위젯 노출 중',
                       icon: Icons.widgets,
-                      color: Color(0xFF1976D2),
+                      color: AppTheme.widgetAlert,
                     ),
                   if (widget.todo.reminder != null)
                     InfoChip(
