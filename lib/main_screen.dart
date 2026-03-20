@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,8 +11,9 @@ import 'package:baromemo/widgets/my_banner_ad_widget.dart';
 import 'package:baromemo/widgets/swipe_action_tile.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
 import 'package:baromemo/main.dart' show quickAddNotifier, openTodoIdNotifier;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:baromemo/widgets/showcase_keys.dart';
+import 'package:baromemo/viewmodels/onboarding_view_model.dart';
 
 const double _taskCardRadius = 20.0;
 const BorderRadius _taskBorderRadius = BorderRadius.all(
@@ -34,13 +35,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final GlobalKey _settingKey = GlobalKey(); // 말풍선 띄울 위젯 키
-
   @override
   void initState() {
-    // 앱 최초 실행 시 팝업
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkFirstTime());
-
     super.initState();
     // 홈 위젯에서 탭 이벤트 감지 → 메모 추가 시트 자동 팝업
     quickAddNotifier.addListener(_onQuickAddRequested);
@@ -57,17 +53,6 @@ class _MainScreenState extends State<MainScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _openTodoById(initialTodoId);
       });
-    }
-  }
-
-  Future<void> _checkFirstTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool isFirstTime = prefs.getBool('show_guide') ?? true;
-    if (isFirstTime) {
-      //가이드를 시작
-      ShowcaseView.get().startShowCase([_settingKey]);
-      //가이드를 다 보여주면 false로 변경
-      await prefs.setBool('show_guide', false);
     }
   }
 
@@ -740,6 +725,17 @@ class _MainScreenState extends State<MainScreen> {
 
     return ShowCaseWidget(
       builder: (context) {
+        // 올바른 빌드 컨텍스트(ShowCaseWidget의 하위 컨텍스트)에서 가이드 시작
+        final onboardingVM = context.read<OnboardingViewModel>();
+        if (onboardingVM.shouldShowGuide) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // 중복 실행 방지 위해 다시 한 번 확인
+            if (onboardingVM.shouldShowGuide) {
+              onboardingVM.startGuide(context);
+              onboardingVM.completeGuide();
+            }
+          });
+        }
         return Scaffold(
           appBar: AppBar(
             title: const Text('바로메모'),
@@ -747,7 +743,7 @@ class _MainScreenState extends State<MainScreen> {
             actions: [
               //가이드 버튼
               Showcase(
-                key: _settingKey,
+                key: ShowcaseKeys.trashKey,
                 description: '삭제한 메모는 휴지통에서 확인할 수 있어요',
                 child: IconButton(
                   icon: const Icon(Icons.delete_outline),
@@ -756,9 +752,13 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
 
-              IconButton(
-                icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                onPressed: onToggleTheme,
+              Showcase(
+                key: ShowcaseKeys.darkModeKey,
+                description: '앱의 테마를 변경할 수 있어요',
+                child: IconButton(
+                  icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                  onPressed: onToggleTheme,
+                ),
               ),
             ],
           ),
@@ -768,15 +768,19 @@ class _MainScreenState extends State<MainScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
-                      hintText: '메모 검색',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                  Showcase(
+                    key: ShowcaseKeys.searchKey,
+                    description: '검색어로 메모를 빠르게 찾을 수 있어요',
+                    child: TextField(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search),
+                        hintText: '메모 검색',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
+                      onChanged: viewModel.setSearchQuery,
                     ),
-                    onChanged: viewModel.setSearchQuery,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -790,21 +794,28 @@ class _MainScreenState extends State<MainScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        DropdownButton<String>(
-                          value: viewModel.tagFilter,
-                          items: const [
-                            DropdownMenuItem(value: '전체', child: Text('전체 태그')),
-                            DropdownMenuItem(value: '일반', child: Text('일반')),
-                            DropdownMenuItem(value: '개인', child: Text('개인')),
-                            DropdownMenuItem(value: '업무', child: Text('업무')),
-                            DropdownMenuItem(value: '건강', child: Text('건강')),
-                            DropdownMenuItem(value: '학습', child: Text('학습')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              viewModel.setTagFilter(value);
-                            }
-                          },
+                        Showcase(
+                          key: ShowcaseKeys.tagKey,
+                          description: '태그별로 메모를 분류해서 볼 수 있어요',
+                          child: DropdownButton<String>(
+                            value: viewModel.tagFilter,
+                            items: const [
+                              DropdownMenuItem(
+                                value: '전체',
+                                child: Text('전체 태그'),
+                              ),
+                              DropdownMenuItem(value: '일반', child: Text('일반')),
+                              DropdownMenuItem(value: '개인', child: Text('개인')),
+                              DropdownMenuItem(value: '업무', child: Text('업무')),
+                              DropdownMenuItem(value: '건강', child: Text('건강')),
+                              DropdownMenuItem(value: '학습', child: Text('학습')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                viewModel.setTagFilter(value);
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(width: 12),
                       ],
@@ -1215,47 +1226,57 @@ class _MainScreenState extends State<MainScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: FilledButton.tonalIcon(
-                          onPressed: () => _showImportantMemoSheet(context),
-                          icon: const Icon(Icons.star),
-                          label: const Text(
-                            '중요 메모 보기',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF81ECE1),
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size.fromHeight(52),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
+                        child: Showcase(
+                          key: ShowcaseKeys.importantMemoKey,
+                          description: '별표 표시한 중요 메모들만 따로 모아볼 수 있어요',
+                          child: FilledButton.tonalIcon(
+                            onPressed: () => _showImportantMemoSheet(context),
+                            icon: const Icon(Icons.star),
+                            label: const Text(
+                              '중요 메모 보기',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF81ECE1),
+                              foregroundColor: Colors.black87,
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 15),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        tooltip: '메모 추가',
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFF58D68D),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(10),
+                      Showcase(
+                        key: ShowcaseKeys.addMemoKey,
+                        description: '새로운 메모를 작성하려면 이 버튼을 누르세요',
+                        child: IconButton(
+                          icon: const Icon(Icons.add),
+                          tooltip: '메모 추가',
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF58D68D),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(10),
+                          ),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (context) {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom:
+                                        MediaQuery.of(
+                                          context,
+                                        ).viewInsets.bottom,
+                                  ),
+                                  child: const CreateTask(),
+                                );
+                              },
+                            );
+                          },
                         ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom:
-                                      MediaQuery.of(context).viewInsets.bottom,
-                                ),
-                                child: const CreateTask(),
-                              );
-                            },
-                          );
-                        },
                       ),
                     ],
                   ),

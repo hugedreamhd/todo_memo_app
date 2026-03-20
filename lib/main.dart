@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -8,6 +8,7 @@ import 'package:baromemo/main_screen.dart';
 import 'package:baromemo/repositories/todo_repository.dart';
 import 'package:baromemo/services/local_notification_service.dart';
 import 'package:baromemo/viewmodels/todo_view_model.dart';
+import 'package:baromemo/viewmodels/onboarding_view_model.dart';
 
 /// 홈 위젯에서 "메모 추가하기" 버튼 탭 여부를 Flutter 전역에서 감지하는 notifier
 final ValueNotifier<bool> quickAddNotifier = ValueNotifier(false);
@@ -96,17 +97,25 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) {
-        final vm = TodoViewModel(TodoRepository(), widget.notificationService)
-          ..initialize();
-        HomeWidget.widgetClicked.listen((uri) {
-          if (uri?.scheme == 'myappwidget' && uri?.host == 'togglecompletion') {
-            vm.initialize(syncWidget: false);
-          }
-        });
-        return vm;
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) {
+            final vm = TodoViewModel(
+              TodoRepository(),
+              widget.notificationService,
+            )..initialize();
+            HomeWidget.widgetClicked.listen((uri) {
+              if (uri?.scheme == 'myappwidget' &&
+                  uri?.host == 'togglecompletion') {
+                vm.initialize(syncWidget: false);
+              }
+            });
+            return vm;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
+      ],
       child: MaterialApp(
         title: '바로메모',
         debugShowCheckedModeBanner: false,
