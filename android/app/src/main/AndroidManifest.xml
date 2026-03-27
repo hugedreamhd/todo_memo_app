@@ -45,10 +45,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-         <!-- Real AdMob app ID -->
+          <!-- Test AdMob app ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4815364449744641~1293024349"/>
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
         <!-- flutter_local_notifications: 예약 알림 수신 -->
         <receiver
             android:exported="false"

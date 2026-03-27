@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -29,8 +29,8 @@ class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
   // 테스트 광고 ID (안드로이드 공식 테스트 ID)
   final String _adUnitId =
       Platform.isAndroid
-          ? 'ca-app-pub-4815364449744641/8465296148'
-          : 'ca-app-pub-3940256099942544/2435281174';
+          ? 'ca-app-pub-3940256099942544/6300978111' // Android 테스트 ID
+          : 'ca-app-pub-3940256099942544/2934735716'; // iOS 테스트 ID
 
   @override
   void didChangeDependencies() {
