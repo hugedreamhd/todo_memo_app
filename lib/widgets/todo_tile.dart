@@ -118,7 +118,7 @@ class TodoTile extends StatelessWidget {
                         // 실제로 위젯에 표시 중인 메모는 완료 여부와 관계없이 표시합니다.
                         if (activeWidgetIds.contains(todo.id))
                           InfoChip(
-                            label: '위젯 노출 중',
+                            label: '위젯',
                             icon: Icons.widgets,
                             color: AppTheme.widgetAlert,
                           ),

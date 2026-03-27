@@ -57,6 +57,16 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     quickAddNotifier.removeListener(_onQuickAddRequested);
@@ -216,7 +226,7 @@ class _MainScreenState extends State<MainScreen> {
                       // 실제로 위젯에 표시 중인 메모만 상태를 보여줍니다.
                       if (viewModel.activeWidgetIds.contains(todo.id))
                         InfoChip(
-                          label: '위젯 노출 중',
+                          label: '위젯',
                           icon: Icons.widgets,
                           color: AppTheme.widgetAlert,
                         ),
@@ -234,12 +244,7 @@ class _MainScreenState extends State<MainScreen> {
                           rootContext,
                         ).popUntil((route) => route.isFirst);
                         if (!success) {
-                          ScaffoldMessenger.of(rootContext).showSnackBar(
-                            const SnackBar(
-                              content: Text('위젯 노출은 3개까지만 가능합니다.'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          _showSnackBar('위젯 노출은 3개까지만 가능합니다.');
                         } else {
                           String message;
                           final isNowOnWidget = !todo.showOnWidget;
@@ -253,9 +258,7 @@ class _MainScreenState extends State<MainScreen> {
                           } else {
                             message = '위젯 고정을 해제했습니다.';
                           }
-                          ScaffoldMessenger.of(
-                            rootContext,
-                          ).showSnackBar(SnackBar(content: Text(message)));
+                          _showSnackBar(message);
                         }
                       }
                     },
@@ -339,11 +342,7 @@ class _MainScreenState extends State<MainScreen> {
                         await viewModel.deleteTodo(todo);
                         if (rootContext.mounted) {
                           Navigator.pop(sheetContext);
-                          ScaffoldMessenger.of(rootContext).showSnackBar(
-                            SnackBar(
-                              content: Text('\'${todo.title}\' 메모가 삭제됐어요'),
-                            ),
-                          );
+                          _showSnackBar('\'${todo.title}\' 메모가 삭제됐어요');
                         }
                       }
                     },
@@ -530,14 +529,8 @@ class _MainScreenState extends State<MainScreen> {
                                                       todo,
                                                     );
                                                     if (sheetContext.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                        rootContext,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            '\'${todo.title}\' 복구했어요',
-                                                          ),
-                                                        ),
+                                                      _showSnackBar(
+                                                        '\'${todo.title}\' 복구했어요',
                                                       );
                                                     }
                                                   }
@@ -600,14 +593,8 @@ class _MainScreenState extends State<MainScreen> {
                                                       todo,
                                                     );
                                                     if (sheetContext.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                        rootContext,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            '\'${todo.title}\' 완전히 삭제했어요',
-                                                          ),
-                                                        ),
+                                                      _showSnackBar(
+                                                        '\'${todo.title}\' 완전히 삭제했어요',
                                                       );
                                                     }
                                                   }
@@ -638,9 +625,7 @@ class _MainScreenState extends State<MainScreen> {
     TodoItem todo,
   ) async {
     if (todo.isHighlighted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('이미 중요 메모로 저장되어 있어요')));
+      _showSnackBar('이미 중요 메모로 저장되어 있어요');
       return;
     }
     final confirm = await showDialog<bool>(
@@ -670,9 +655,7 @@ class _MainScreenState extends State<MainScreen> {
     if (confirm == true) {
       await viewModel.setImportant(todo, true);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('\'${todo.title}\'이(가) 중요 메모로 저장됐어요')),
-        );
+        _showSnackBar('\'${todo.title}\'이(가) 중요 메모로 저장됐어요');
       }
     }
   }
@@ -709,9 +692,7 @@ class _MainScreenState extends State<MainScreen> {
     if (confirm == true) {
       await viewModel.deleteTodo(todo);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('\'${todo.title}\' 메모가 삭제됐어요')));
+        _showSnackBar('\'${todo.title}\' 메모가 삭제됐어요');
       }
     }
   }
@@ -967,9 +948,11 @@ class _MainScreenState extends State<MainScreen> {
                                                       if (!todo.isCompleted &&
                                                           todo.showOnWidget)
                                                         InfoChip(
-                                                          label: '위젯 노출 중',
+                                                          label: '위젯',
                                                           icon: Icons.widgets,
-                                                          color: AppTheme.widgetAlert,
+                                                          color:
+                                                              AppTheme
+                                                                  .widgetAlert,
                                                         ),
                                                       if (todo.reminder != null)
                                                         InfoChip(
@@ -1071,16 +1054,10 @@ class _MainScreenState extends State<MainScreen> {
                                                                 );
                                                             if (context
                                                                 .mounted) {
-                                                              ScaffoldMessenger.of(
-                                                                context,
-                                                              ).showSnackBar(
-                                                                SnackBar(
-                                                                  content: Text(
-                                                                    todo.isHighlighted
-                                                                        ? '\'${todo.title}\'이(가) 일반 메모로 이동했어요'
-                                                                        : '\'${todo.title}\'이(가) 중요 메모로 이동했어요',
-                                                                  ),
-                                                                ),
+                                                              _showSnackBar(
+                                                                todo.isHighlighted
+                                                                    ? '\'${todo.title}\'이(가) 일반 메모로 이동했어요'
+                                                                    : '\'${todo.title}\'이(가) 중요 메모로 이동했어요',
                                                               );
                                                             }
                                                           }
@@ -1109,19 +1086,8 @@ class _MainScreenState extends State<MainScreen> {
                                                                   );
                                                           if (context.mounted) {
                                                             if (!success) {
-                                                              ScaffoldMessenger.of(
-                                                                context,
-                                                              ).showSnackBar(
-                                                                const SnackBar(
-                                                                  content: Text(
-                                                                    '위젯 노출은 3개까지만 가능합니다.',
-                                                                  ),
-                                                                  duration:
-                                                                      Duration(
-                                                                        seconds:
-                                                                            2,
-                                                                      ),
-                                                                ),
+                                                              _showSnackBar(
+                                                                '위젯 노출은 3개까지만 가능합니다.',
                                                               );
                                                             } else {
                                                               final isNowOnWidget =
@@ -1141,24 +1107,12 @@ class _MainScreenState extends State<MainScreen> {
                                                                   message =
                                                                       '위젯 고정을 활성화했습니다 📌';
                                                                 }
-                                                                ScaffoldMessenger.of(
-                                                                  context,
-                                                                ).showSnackBar(
-                                                                  SnackBar(
-                                                                    content: Text(
-                                                                      message,
-                                                                    ),
-                                                                  ),
+                                                                _showSnackBar(
+                                                                  message,
                                                                 );
                                                               } else {
-                                                                ScaffoldMessenger.of(
-                                                                  context,
-                                                                ).showSnackBar(
-                                                                  const SnackBar(
-                                                                    content: Text(
-                                                                      '위젯 고정을 해제했습니다.',
-                                                                    ),
-                                                                  ),
+                                                                _showSnackBar(
+                                                                  '위젯 고정을 해제했습니다.',
                                                                 );
                                                               }
                                                             }

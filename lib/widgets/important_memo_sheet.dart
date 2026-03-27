@@ -24,21 +24,33 @@ class ImportantMemoSheetContent extends StatefulWidget {
 
 class _ImportantMemoSheetContentState extends State<ImportantMemoSheetContent> {
   String selectedTag = '전체';
-  String? _localMessage;
+  String _message = '';
+  // String? _localMessage;
 
-  void _showMessage(String message) {
-    setState(() {
-      _localMessage = message;
-    });
-    // 2초 후 메시지 제거
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _localMessage = null;
-        });
-      }
-    });
+  // important_memo_sheet.dart의 State 클래스 안에 추가
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_message = message),
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
   }
+
+  // void _showMessage(String message) {
+  //   setState(() {
+  //     _localMessage = message;
+  //   });
+  //   // 2초 후 메시지 제거
+  //   Future.delayed(const Duration(seconds: 2), () {
+  //     if (mounted) {
+  //       setState(() {
+  //         _localMessage = null;
+  //       });
+  //     }
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +176,7 @@ class _ImportantMemoSheetContentState extends State<ImportantMemoSheetContent> {
                                   rootContext: widget.rootContext,
                                   onShowActionSheet:
                                       widget.onShowTaskActionSheet,
-                                  onMessage: _showMessage,
+                                  onMessage: _showSnackBar,
                                 );
                               },
                             ),
@@ -172,39 +184,39 @@ class _ImportantMemoSheetContentState extends State<ImportantMemoSheetContent> {
                 ],
               ),
               // 커머스 스타일의 간단한 로컬 알림
-              if (_localMessage != null)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        _localMessage!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              // if (_localMessage != null)
+              //   Positioned(
+              //     bottom: 0,
+              //     left: 0,
+              //     right: 0,
+              //     child: Center(
+              //       child: Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 16,
+              //           vertical: 10,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: Colors.black87,
+              //           borderRadius: BorderRadius.circular(20),
+              //           boxShadow: [
+              //             BoxShadow(
+              //               color: Colors.black.withOpacity(0.2),
+              //               blurRadius: 8,
+              //               offset: const Offset(0, 2),
+              //             ),
+              //           ],
+              //         ),
+              //         child: Text(
+              //           _localMessage!,
+              //           style: const TextStyle(
+              //             color: Colors.white,
+              //             fontSize: 13,
+              //             fontWeight: FontWeight.w500,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
         ),
@@ -303,9 +315,7 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
           await widget.viewModel.deleteTodo(widget.todo);
           if (widget.rootContext.mounted) {
             // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(widget.rootContext).showSnackBar(
-              SnackBar(content: Text('\'${widget.todo.title}\' 메모가 삭제됐어요')),
-            );
+            widget.onMessage('메세지가 삭제되었습니다.');
           }
         }
       },
@@ -399,7 +409,7 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
                   InfoChip(label: widget.todo.tag, icon: Icons.tag),
                   if (widget.todo.showOnWidget)
                     InfoChip(
-                      label: '위젯 노출 중',
+                      label: '위젯',
                       icon: Icons.widgets,
                       color: AppTheme.widgetAlert,
                     ),
@@ -476,7 +486,7 @@ class _ImportantTodoTileState extends State<ImportantTodoTile> {
                           .toggleWidgetVisibility(widget.todo.id);
                       if (context.mounted) {
                         if (!success) {
-                          widget.onMessage('위젯 노출은 3개까지만 가능합니다.');
+                          widget.onMessage('위젯은 3개까지만 가능합니다.');
                         } else {
                           final isNowOnWidget = !widget.todo.showOnWidget;
                           if (isNowOnWidget) {

@@ -26,21 +26,57 @@ class TodoViewModel extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   final TodoRepositoryInterface _repository;
+
   final NotificationServiceInterface _notificationService;
+
   final WidgetSyncService _widgetSyncService = WidgetSyncService();
+
   List<TodoItem> _todos = [];
+
   static const Duration _deleteRetention = Duration(days: 3);
+
   bool _isLoading = true;
 
   String _searchQuery = '';
+
   String _tagFilter = '전체';
 
+  List<String> getSmartSuggestions() {
+    // 1. 기본 추천 항목 (신규 사용자용)
+    const defaultSuggestions = ['운동', '장보기', '일기 쓰기', '약속', '영양제먹기'];
+    // 2. 현재 저장된 메모들 중에서 짧은 제목(예: 10자 이내)만 추출 (최신순)
+    final userTitles =
+        _todos
+            .where((todo) => todo.deletedAt == null)
+            .map((todo) => todo.title.trim())
+            .where((title) => title.isNotEmpty && title.length <= 10)
+            .toSet()
+            .toList();
+    // 3. 사용자 데이터 + 부족한 만큼 기본값으로 채우기
+    // 사용자 데이터를 먼저 넣고, 5개가 될 때까지 기본값을 추가합니다.
+    List<String> finalSuggestions = [...userTitles];
+
+    for (var suggestion in defaultSuggestions) {
+      if (finalSuggestions.length >= 10) break;
+      if (!finalSuggestions.contains(suggestion)) {
+        finalSuggestions.add(suggestion);
+      }
+    }
+
+    return finalSuggestions.take(5).toList();
+  }
+
   bool get isLoading => _isLoading;
+
   String get searchQuery => _searchQuery;
+
   String get tagFilter => _tagFilter;
+
   List<TodoItem> get todos => List.unmodifiable(_todos);
+
   List<TodoItem> get visibleTodos =>
       _todos.where((todo) => todo.deletedAt == null).toList();
+
   List<TodoItem> get deletedTodos {
     final now = DateTime.now();
     return _todos.where((todo) {

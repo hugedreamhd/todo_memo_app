@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,13 +17,7 @@ class CreateTask extends StatefulWidget {
 
 class _CreateTaskState extends State<CreateTask> {
   final TextEditingController _titleController = TextEditingController();
-  final List<String> _suggestions = [
-    '운동 30분',
-    '독서 20분',
-    '감사 일기 쓰기',
-    '집안 정리',
-    '물 1잔 마시기',
-  ];
+  List<String> _suggestions = [];
   String? _errorText;
   String _selectedTag = '일반';
   DateTime? _reminder;
@@ -32,6 +26,19 @@ class _CreateTaskState extends State<CreateTask> {
   String? _imagePath;
 
   final ImagePicker _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // BuildContext가 준비된 후 ViewModel에서 추천 목록을 가져옵니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = context.read<TodoViewModel>();
+      setState(() {
+        _suggestions = viewModel.getSmartSuggestions();
+      });
+    });
+  }
 
   @override
   void dispose() {
